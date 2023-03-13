@@ -109,6 +109,10 @@
 #include "botdatamgr.h"
 //end npcbot
 
+//rewardpoint
+#include "RewardPointMgr.h"
+//end rewardpoint
+
 #define ZONE_UPDATE_INTERVAL (1*IN_MILLISECONDS)
 
 #define PLAYER_SKILL_INDEX(x)       (PLAYER_SKILL_INFO_1_1 + ((x)*3))
@@ -15435,6 +15439,10 @@ void Player::RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, 
     UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_QUEST_COUNT);
     UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_QUEST, quest->GetQuestId());
 
+    //rewardpoint
+    sRewardPointMgr->QuestCompleted(this, quest);
+    //end rewardpoint
+
     // make full db save
     SaveToDB(false);
 
@@ -16554,6 +16562,10 @@ void Player::KilledMonster(CreatureTemplate const* cInfo, ObjectGuid guid)
 
     if (cInfo->Entry)
         KilledMonsterCredit(cInfo->Entry, guid);
+
+    //rewardpoint
+    sRewardPointMgr->MonsterKilled(this, cInfo, guid);
+    //end rewardpoint
 
     for (uint8 i = 0; i < MAX_KILL_CREDIT; ++i)
         if (cInfo->KillCredit[i])

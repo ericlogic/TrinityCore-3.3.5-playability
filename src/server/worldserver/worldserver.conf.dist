@@ -4485,6 +4485,55 @@ NpcBot.OwnershipExpireTime = 0
 
 NpcBot.EnrageOnDismiss = 1
 
+###################################################################################################
+# REWARDPOINT CONFIGURATION
+#
+#    RewardPoint.MonsterKill.<Type>
+#        Description: Reward points for monster kills.
+#        Default:     0  - (RewardPoint.MonsterKill.Normal)
+#                     0  - (RewardPoint.MonsterKill.Elite)
+#                     2  - (RewardPoint.MonsterKill.Rare)
+#                     5  - (RewardPoint.MonsterKill.RareElite)
+#                     5  - (RewardPoint.MonsterKill.DungeonBoss)
+#                     10 - (RewardPoint.MonsterKill.WorldBoss)
+
+RewardPoint.MonsterKill.Normal = 0
+RewardPoint.MonsterKill.Elite = 0
+RewardPoint.MonsterKill.Rare = 2
+RewardPoint.MonsterKill.RareElite = 5
+RewardPoint.MonsterKill.DungeonBoss = 5
+RewardPoint.MonsterKill.WorldBoss = 10
+
+#
+#    RewardPoint.Quest
+#        Description: Reward points for quest.
+#        Default:     1
+
+RewardPoint.Quest = 1
+
+#
+#    RewardPoint.FriendsRecruit.Inviter
+#        Description: Friends recruit reward points of inviter.
+#        Default:     50
+
+RewardPoint.FriendsRecruit.Inviter = 50
+
+#
+#    RewardPoint.FriendsRecruit.Invitee
+#        Description: Friends recruit reward points of inviter.
+#        Default:     500
+
+RewardPoint.FriendsRecruit.Invitee = 500
+
+#
+#    RewardPoint.CharacterBoost.<Level>
+#        Description: Reward points for monster kills.
+#        Default:     60 - (RewardPoint.CharacterBoost.60)
+#                     70 - (RewardPoint.CharacterBoost.70)
+
+RewardPoint.CharacterBoost.60 = 300
+RewardPoint.CharacterBoost.70 = 500
+
 #
 #    NpcBot.DesiredWanderingBotsCount
 #        Description: Number of free wandering bots to generate. Wandering bots, well, wander

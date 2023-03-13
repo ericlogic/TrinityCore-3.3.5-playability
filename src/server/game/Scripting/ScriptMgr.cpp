@@ -47,6 +47,10 @@
 #include "botmgr.h"
 //end npcbot
 
+//rewardpoint
+#include "RewardPointMgr.h"
+//end rewardpoint
+
 // Trait which indicates whether this script type
 // must be assigned in the database.
 template<typename>
@@ -1050,6 +1054,10 @@ void ScriptMgr::Initialize()
     //npcbot: load bot scripts here
     AddNpcBotScripts();
     //end npcbot
+
+    //rewardpoint
+    AddRewardPointScripts();
+    //end rewardpoint
 
     // Load all static linked scripts through the script loader function.
     ASSERT(_script_loader_callback,

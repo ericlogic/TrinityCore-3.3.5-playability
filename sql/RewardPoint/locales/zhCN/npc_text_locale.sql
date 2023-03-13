@@ -1,0 +1,27 @@
+DELETE FROM `npc_text_locale` WHERE `ID` between 80000 AND 80400;
+INSERT INTO `npc_text_locale` (`ID`, `Locale`, `Text0_0`, `Text0_1`, `Text1_0`, `Text1_1`, `Text2_0`, `Text2_1`, `Text3_0`, `Text3_1`, `Text4_0`, `Text4_1`, `Text5_0`, `Text5_1`, `Text6_0`, `Text6_1`, `Text7_0`, `Text7_1`)
+VALUES
+	(80000, 'zhCN', '你获得了%d奖励积分。', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80001, 'zhCN', '你的账号现在有%d奖励积分。', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80002, 'zhCN', '你给{0}的账号增加了{1}奖励积分。', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80003, 'zhCN', '{0}给你的账号增加了{1}奖励积分。', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80004, 'zhCN', '你从{0}的账号扣减了{1}奖励积分。', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80005, 'zhCN', '{0}从你的账号扣减了{1}奖励积分。', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80006, 'zhCN', '请预留%d个物品栏位来接收初始装备！', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80100, 'zhCN', '我现在有多少奖励积分？', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80101, 'zhCN', '什么是奖励积分？', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80102, 'zhCN', '如何获取奖励积分？', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80103, 'zhCN', '没事了！', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80104, 'zhCN', '我知道了！', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80105, 'zhCN', '直升60级 (%d奖励积分)。', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80106, 'zhCN', '直升70级 (%d奖励积分)。', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80107, 'zhCN', '确定要花费%d奖励积分直升60级？', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80108, 'zhCN', '确定要花费%d奖励积分直升70级？', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80109, 'zhCN', '好吧！', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80110, 'zhCN', '我有一张电子兑换券。', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80200, 'zhCN', '奖励积分是一种在同账号的多个角色之间共享的代币。当你在世界中冒险时会有机会获得奖积分。这些奖励积分可以用来兑换道具或增值服务！', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80201, 'zhCN', '有很多方式可以获取奖励积分——完成任务，击杀地下城首领——等等。还有一些特殊事件也可以获取奖励积分。', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80202, 'zhCN', '你好，$C。$B$B我可以为你提供角色直升服务，不过你先得想我证明你已经是一个身经百战的冒险者。', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80203, 'zhCN', '很抱歉！你没有足够的奖励积分！', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80204, 'zhCN', '你看起来足够强大了，已经不再需要这项服务！', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+	(80205, 'zhCN', '很抱歉！我不能为你兑换这张电子兑换券！请确认是否输入正确，或已经兑换过了！', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
