@@ -1,0 +1,21 @@
+-- Tailors
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 1103;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 1346;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 2399;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 2627;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 3004;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 3363;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 3484;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 3523;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 3704;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 4159;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 4193;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 4576;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 5041;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 5153;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 11052;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 16000;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 16366;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 16640;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 16729;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 17487;
