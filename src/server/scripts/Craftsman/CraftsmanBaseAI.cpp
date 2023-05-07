@@ -615,6 +615,6 @@ uint32 CraftsmanBaseAI::GetReagents(const SpellInfo* spellInfo, Reagents& reagen
 
 uint32 CraftsmanBaseAI::AddReagents(Reagents& reagents, uint32 itemId, uint32 count)
 {
-    reagents[itemId] = count;
+    reagents[itemId] += count;
     return 0;
 }
