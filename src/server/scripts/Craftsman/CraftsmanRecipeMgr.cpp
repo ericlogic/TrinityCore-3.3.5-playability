@@ -84,6 +84,18 @@ void CraftsmanRecipeMgr::AddRecipeForPlayer(Player* player, uint32 recipeId)
     craftsmanRecipes[characterId].push_back(recipe);
 }
 
+const std::string& CraftsmanRecipeMgr::GetKeyword(Player* player)
+{
+    uint32 characterId = player->GetGUID().GetCounter();
+    return keywords[characterId];
+}
+
+void CraftsmanRecipeMgr::SetKeyword(Player* player, const std::string& keyword)
+{
+    uint32 characterId = player->GetGUID().GetCounter();
+    keywords[characterId] = keyword;
+}
+
 void CraftsmanRecipeMgr::LoadFromDBForPlayer(Player* player)
 {
     uint32 characterId = player->GetGUID().GetCounter();
@@ -106,6 +118,7 @@ void CraftsmanRecipeMgr::UnloadForPlayer(Player* player)
 {
     uint32 characterId = player->GetGUID().GetCounter();
     craftsmanRecipes.erase(characterId);
+    keywords.erase(characterId);
 }
 
 CraftsmanRecipeMgr* CraftsmanRecipeMgr::instance()

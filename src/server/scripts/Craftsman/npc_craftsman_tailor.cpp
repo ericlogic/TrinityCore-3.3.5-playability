@@ -67,6 +67,28 @@ public:
             return money;
         }
 
+        uint32 GetSpellPrice(uint32 spellId) override
+        {
+            switch (spellId)
+            {
+                case 2963:  // Bolt of Linen Cloth
+                case 2964:  // Bolt of Woolen Cloth
+                case 3839:  // Bolt of Silk Cloth
+                case 3865:  // Bolt of Mageweave
+                case 18401: // Bolt of Runecloth
+                case 18560: // Mooncloth
+                case 26745: // Bolt of Netherweave
+                case 26751: // Primal Mooncloth
+                case 26747: // Bolt of Imbued Netherweave
+                case 26750: // Bolt of Soulcloth
+                case 55899: // Bolt of Frostweave
+                case 55900: // Bolt of Imbued Frostweave
+                    return 0;
+                default:
+                    return CraftsmanBaseAI::GetSpellPrice(spellId);
+            }
+        }
+
     };
 
     CreatureAI* GetAI(Creature* creature) const override

@@ -192,14 +192,12 @@ void CraftsmanBaseAI::SpellHitTarget(WorldObject* wtarget, SpellInfo const* spel
     // Check reagents
     if (!CheckReagentsForPlayer(player, reagents, count))
     {
-        CloseGossipMenuFor(player);
         WhisperNeedReagentFor(player, artifactId, reagents);
         return;
     }
 
     // Check money.
     if (player->GetMoney() < cost) {
-        CloseGossipMenuFor(player);
         player->SendBuyError(BUY_ERR_NOT_ENOUGHT_MONEY, nullptr, 0, 0);
         return;
     }
@@ -208,7 +206,6 @@ void CraftsmanBaseAI::SpellHitTarget(WorldObject* wtarget, SpellInfo const* spel
     ItemPosCountVec dest;
     if (!CheckInventorySlotForPlayer(player, artifactId, count, &dest))
     {
-        CloseGossipMenuFor(player);
         WhisperNotEnoughSlotFor(player);
         return;
     }
@@ -222,6 +219,8 @@ void CraftsmanBaseAI::SpellHitTarget(WorldObject* wtarget, SpellInfo const* spel
     // Create new items for customer.
     Item* pItem = player->StoreNewItem(dest, artifactId, true, 0);
     player->SendNewItem(pItem, count, true, false, true);
+
+    SendRecipeGossipMenuFor(player, sCraftsmanRecipeMgr->GetKeyword(player));
 }
 
 void CraftsmanBaseAI::SendMainGossipMenuFor(Player* player)
@@ -253,6 +252,8 @@ void CraftsmanBaseAI::SendRecipeGossipMenuFor(Player* player, std::string keywor
     AddGossipItemFor(player, GOSSIP_ICON_CHAT, backText, GOSSIP_SENDER_CRAFTSMAN_RECIPES, GOSSIP_ACTION_BACK);
 
     SendGossipMenuFor(player, GOSSIP_TEXT_CRAFTSMAN_RECIPES, me);
+
+    sCraftsmanRecipeMgr->SetKeyword(player, keyword);
 }
 
 void CraftsmanBaseAI::SendOfferRecipeGossipMenuFor(Player* player)
@@ -339,7 +340,7 @@ void CraftsmanBaseAI::HandleMainSenderAction(Player* player, uint32 action)
     switch (action)
     {
         case GOSSIP_ACTION_OEM_SERVICE:
-            SendRecipeGossipMenuFor(player, "");
+            SendRecipeGossipMenuFor(player, sCraftsmanRecipeMgr->GetKeyword(player));
             break;
         default:
             break;
@@ -544,7 +545,7 @@ uint CraftsmanBaseAI::PrepareRecipeMenuItems(Player* player, std::string keyword
         if (name.find(keyword) == std::string::npos)
             continue;
 
-        uint32 price = GetSpellPriceByRank(it->skillRank);
+        uint32 price = GetSpellPrice(it->spellId);
         Reagents reagents;
         price += GetReagents(spellInfo, reagents);
 
@@ -567,7 +568,7 @@ uint CraftsmanBaseAI::PrepareRecipeMenuItems(Player* player, std::string keyword
         if (name.find(keyword) == std::string::npos)
             continue;
 
-        uint32 price = GetSpellPriceByRank(it->ReqSkillRank);
+        uint32 price = GetSpellPrice(it->SpellId);
         Reagents reagents;
         price += GetReagents(spellInfo, reagents);
 
