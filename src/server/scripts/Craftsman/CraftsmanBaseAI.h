@@ -70,10 +70,10 @@ protected:
 
     uint PrepareRecipeMenuItems(Player* player, std::string keyword);
 
-    void CastCreateItemSpellFor(Player* player, uint32 spellId, uint32 count);
+    void CastCreateItemSpellFor(Player* player, uint32 spellId);
     void LearnRecipeFor(Player* player, uint32 recipeId);
 
-    void WhisperNeedReagentFor(Player* player, uint32 artifactId, const Reagents& reagents);
+    void WhisperNeedReagentFor(Player* player, uint32 artifactId, const Reagents& reagents, uint32 count);
     void WhisperNotEnoughSlotFor(Player* player);
     void WhisperStartWorkingFor(Player* player, uint32 artifactId);
     void WhisperNoSuchItemFor(Player* player);
@@ -82,6 +82,7 @@ protected:
     virtual void PrepareMainMenuItems(Player* player) = 0;
 
     virtual uint32 GetSpellPrice(uint32 spellId);
+    virtual uint32 GetSpellCount(uint32 spellId) { return 1; };
     virtual uint32 GetReagents(const SpellInfo* spellInfo, Reagents& reagents);
     virtual uint32 AddReagents(Reagents& reagents, uint32 itemId, uint32 count);
 

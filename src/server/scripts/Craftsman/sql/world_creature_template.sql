@@ -19,3 +19,25 @@ UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entr
 UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 16640;
 UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 16729;
 UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tailor' WHERE `entry` = 17487;
+
+-- Miners
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 1384;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 1681;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 1701;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 2222;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 3001;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 3137;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 3175;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 3357;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 3555;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 4254;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 4598;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 4999;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 5392;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 5513;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 6297;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 8128;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 12035;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 16663;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 16752;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 17488;

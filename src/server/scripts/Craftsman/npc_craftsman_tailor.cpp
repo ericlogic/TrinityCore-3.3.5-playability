@@ -19,6 +19,21 @@ static const std::map<uint32, Reagents> equivalents =
     { 41510, { { 33470, 10 }, { 34054,  2 } } },    // Bolt of Imbued Frostcloth
 };
 
+static const std::vector<uint32> materialSpellIds = {
+    2963,   // Bolt of Linen Cloth
+    2964,   // Bolt of Woolen Cloth
+    3839,   // Bolt of Silk Cloth
+    3865,   // Bolt of Mageweave
+    18401,  // Bolt of Runecloth
+    18560,  // Mooncloth
+    26745,  // Bolt of Netherweave
+    26751,  // Primal Mooncloth
+    26747,  // Bolt of Imbued Netherweave
+    26750,  // Bolt of Soulcloth
+    55899,  // Bolt of Frostweave
+    55900,  // Bolt of Imbued Frostweave
+};
+
 class npc_craftsman_tailor : public CreatureScript
 {
 public:
@@ -69,24 +84,20 @@ public:
 
         uint32 GetSpellPrice(uint32 spellId) override
         {
-            switch (spellId)
-            {
-                case 2963:  // Bolt of Linen Cloth
-                case 2964:  // Bolt of Woolen Cloth
-                case 3839:  // Bolt of Silk Cloth
-                case 3865:  // Bolt of Mageweave
-                case 18401: // Bolt of Runecloth
-                case 18560: // Mooncloth
-                case 26745: // Bolt of Netherweave
-                case 26751: // Primal Mooncloth
-                case 26747: // Bolt of Imbued Netherweave
-                case 26750: // Bolt of Soulcloth
-                case 55899: // Bolt of Frostweave
-                case 55900: // Bolt of Imbued Frostweave
-                    return 0;
-                default:
-                    return CraftsmanBaseAI::GetSpellPrice(spellId);
-            }
+            uint32 price = CraftsmanBaseAI::GetSpellPrice(spellId);
+
+            if (std::find(materialSpellIds.begin(), materialSpellIds.end(), spellId) != materialSpellIds.end())
+                price /= 100;
+
+            return price;
+        }
+
+        uint32 GetSpellCount(uint32 spellId) override
+        {
+            if (std::find(materialSpellIds.begin(), materialSpellIds.end(), spellId) != materialSpellIds.end())
+                return 10;
+
+            return 1;
         }
 
     };

@@ -3,6 +3,7 @@ DELETE FROM `craftsman_text_locale` WHERE `Locale`='zhCN';
 INSERT INTO `craftsman_text_locale` (`id`, `locale`, `text`)
 VALUES
 	(1000, 'zhCN', '裁缝服务'),
+	(1001, 'zhCN', '熔炼矿石'),
 	(1100, 'zhCN', '关键词：{0}'),
 	(1101, 'zhCN', '<点击输入关键词搜索>'),
 	(1102, 'zhCN', '制作{0}需要{1}。'),

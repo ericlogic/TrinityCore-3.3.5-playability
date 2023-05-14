@@ -192,7 +192,7 @@ void CraftsmanBaseAI::SpellHitTarget(WorldObject* wtarget, SpellInfo const* spel
     // Check reagents
     if (!CheckReagentsForPlayer(player, reagents, count))
     {
-        WhisperNeedReagentFor(player, artifactId, reagents);
+        WhisperNeedReagentFor(player, artifactId, reagents, count);
         return;
     }
 
@@ -361,7 +361,7 @@ void CraftsmanBaseAI::HandleRecipesSenderAction(Player* player, uint32 action, c
             SendMainGossipMenuFor(player);
             break;
         default:
-            CastCreateItemSpellFor(player, action, 1);
+            CastCreateItemSpellFor(player, action);
             break;
     }
 }
@@ -415,7 +415,7 @@ void CraftsmanBaseAI::HandleRecipeLearnedSenderAction(Player* player, uint32 act
     }
 }
 
-void CraftsmanBaseAI::CastCreateItemSpellFor(Player* player, uint32 spellId, uint32 count)
+void CraftsmanBaseAI::CastCreateItemSpellFor(Player* player, uint32 spellId)
 {
     // Get spell info and artifactId
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
@@ -426,11 +426,14 @@ void CraftsmanBaseAI::CastCreateItemSpellFor(Player* player, uint32 spellId, uin
     uint32 cost = GetSpellPrice(spellId);
     cost += GetReagents(spellInfo, reagents);
 
+    // Calculate count
+    uint32 count = GetSpellCount(spellId);
+
     // Check reagents
     if (!CheckReagentsForPlayer(player, reagents, count))
     {
         CloseGossipMenuFor(player);
-        WhisperNeedReagentFor(player, artifactId, reagents);
+        WhisperNeedReagentFor(player, artifactId, reagents, count);
         return;
     }
 
@@ -485,7 +488,7 @@ void CraftsmanBaseAI::LearnRecipeFor(Player* player, uint32 recipeId)
     SendRecipeLearnedGossipMenuFor(player);
 }
 
-void CraftsmanBaseAI::WhisperNeedReagentFor(Player* player, uint32 artifactId, const Reagents& reagents)
+void CraftsmanBaseAI::WhisperNeedReagentFor(Player* player, uint32 artifactId, const Reagents& reagents, uint32 count)
 {
     const std::string& needReagentsText = sCraftsmanTextMgr->GetText(player, CMTEXT_NEED_REAGNETS);
 
@@ -496,7 +499,7 @@ void CraftsmanBaseAI::WhisperNeedReagentFor(Player* player, uint32 artifactId, c
     {
         if (it != reagents.begin())
             oss << ", ";
-        oss << GetItemLink(player, it->first) << 'x' << it->second;
+        oss << GetItemLink(player, it->first) << 'x' << (it->second * count);
     }
     std::string reagentsText = oss.str();
 
