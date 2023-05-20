@@ -423,7 +423,7 @@ void CraftsmanBaseAI::CastCreateItemSpellFor(Player* player, uint32 spellId)
 
     // Calculate reagents and price
     Reagents reagents;
-    uint32 cost = GetSpellPrice(spellId);
+    uint32 cost = GetSpellPrice(player, spellId);
     cost += GetReagents(spellInfo, reagents);
 
     // Calculate count
@@ -548,7 +548,7 @@ uint CraftsmanBaseAI::PrepareRecipeMenuItems(Player* player, std::string keyword
         if (name.find(keyword) == std::string::npos)
             continue;
 
-        uint32 price = GetSpellPrice(it->spellId);
+        uint32 price = GetSpellPrice(player, it->spellId);
         Reagents reagents;
         price += GetReagents(spellInfo, reagents);
 
@@ -556,10 +556,10 @@ uint CraftsmanBaseAI::PrepareRecipeMenuItems(Player* player, std::string keyword
         ++matched;
     }
 
-    const std::vector<Trainer::Spell>& trainerSpells = trainer->GetSpells();
-    for (std::vector<Trainer::Spell>::const_iterator it = trainerSpells.begin(); it != trainerSpells.end() && matched < 10; ++it)
+    const std::vector<CraftsmanCommonRecipe>& commonRecipes = GetCommonRecipe();
+    for (std::vector<CraftsmanCommonRecipe>::const_iterator it = commonRecipes.begin(); it != commonRecipes.end() && matched < 10; ++it)
     {
-        const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(it->SpellId);
+        const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(it->spellId);
         if (spellInfo == nullptr)
             continue;
 
@@ -571,34 +571,35 @@ uint CraftsmanBaseAI::PrepareRecipeMenuItems(Player* player, std::string keyword
         if (name.find(keyword) == std::string::npos)
             continue;
 
-        uint32 price = GetSpellPrice(it->SpellId);
+        uint32 price = GetSpellPrice(player, it->spellId);
         Reagents reagents;
         price += GetReagents(spellInfo, reagents);
 
-        AddGossipItemFor(player, GOSSIP_ICON_VENDOR, name, GOSSIP_SENDER_CRAFTSMAN_RECIPES, it->SpellId, name, price, false);
+        AddGossipItemFor(player, GOSSIP_ICON_VENDOR, name, GOSSIP_SENDER_CRAFTSMAN_RECIPES, it->spellId, name, price, false);
         ++matched;
     }
 
     return matched;
 }
 
-uint32 CraftsmanBaseAI::GetSpellPrice(uint32 spellId)
+uint32 CraftsmanBaseAI::GetSpellPrice(Player* player, uint32 spellId)
 {
-    if (trainerId == 0)
-        return 0;
-
-    const Trainer::Trainer* trainer = sObjectMgr->GetTrainer(trainerId);
-    if (trainer == nullptr)
-        return 0;
-
-    const std::vector<Trainer::Spell>& trainerSpells = trainer->GetSpells();
-
-    for (std::vector<Trainer::Spell>::const_iterator it = trainerSpells.begin(); it != trainerSpells.end(); ++it)
+    const std::vector<CraftsmanRecipe>& recipes = sCraftsmanRecipeMgr->GetRecipesByPlayer(player);
+    for (std::vector<CraftsmanRecipe>::const_iterator it = recipes.begin(); it != recipes.end(); ++it)
     {
-        if (it->SpellId != spellId)
+        if (it->spellId != spellId)
             continue;
 
-        return GetSpellPriceByRank(it->ReqSkillRank);
+        return GetSpellPriceByRank(it->skillRank);
+    }
+
+    const std::vector<CraftsmanCommonRecipe>& commonRecipes = GetCommonRecipe();
+    for (std::vector<CraftsmanCommonRecipe>::const_iterator it = commonRecipes.begin(); it != commonRecipes.end(); ++it)
+    {
+        if (it->spellId != spellId)
+            continue;
+
+        return GetSpellPriceByRank(it->skillRank);
     }
 
     return 0;
@@ -621,4 +622,10 @@ uint32 CraftsmanBaseAI::AddReagents(Reagents& reagents, uint32 itemId, uint32 co
 {
     reagents[itemId] += count;
     return 0;
+}
+
+const std::vector<CraftsmanCommonRecipe>& CraftsmanBaseAI::GetCommonRecipe() const
+{
+    static const std::vector<CraftsmanCommonRecipe> empty;
+    return empty;
 }

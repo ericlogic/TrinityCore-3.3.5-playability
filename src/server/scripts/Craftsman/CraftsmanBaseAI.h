@@ -43,6 +43,12 @@ enum CraftsmanGossip
 class TC_GAME_API Player;
 typedef std::map<uint32, uint32> Reagents;
 
+struct TC_GAME_API CraftsmanCommonRecipe
+{
+    uint32 spellId;
+    uint32 skillRank;
+};
+
 struct TC_GAME_API CraftsmanBaseAI : public ScriptedAI
 {
 public:
@@ -81,10 +87,11 @@ protected:
     virtual void PrepareDefaultRecipeMenuItems(Player* player) { };
     virtual void PrepareMainMenuItems(Player* player) = 0;
 
-    virtual uint32 GetSpellPrice(uint32 spellId);
+    virtual uint32 GetSpellPrice(Player* player, uint32 spellId);
     virtual uint32 GetSpellCount(uint32 spellId) { return 1; };
     virtual uint32 GetReagents(const SpellInfo* spellInfo, Reagents& reagents);
     virtual uint32 AddReagents(Reagents& reagents, uint32 itemId, uint32 count);
+    virtual const std::vector<CraftsmanCommonRecipe>& GetCommonRecipe() const;
 
 protected:
     uint32 trainerId;
