@@ -1,4 +1,5 @@
 #include "CraftsmanBaseAI.h"
+#include "CraftsmanRecipeMgr.h"
 #include "CraftsmanTextMgr.h"
 #include "ScriptMgr.h"
 #include "ScriptedGossip.h"
@@ -186,7 +187,18 @@ static const std::vector<CraftsmanCommonRecipe> commonRecipes =
     { 56029, 435 },
     { 56024, 440 },
     { 56026, 440 },
-    { 56028, 440 }
+    { 56028, 440 },
+};
+
+static const std::vector<CraftsmanCommonRecipe> recommandedRecipes =
+{
+    { 3755, 45 },
+    { 3757, 80 },
+    { 3813, 150 },
+    { 12065, 225 },
+    { 12079, 235 },
+    { 26746, 315 },
+    { 56007, 410 },
 };
 
 static const std::map<uint32, Reagents> equivalents =
@@ -284,6 +296,11 @@ public:
                 return 10;
 
             return 1;
+        }
+
+        const std::vector<CraftsmanCommonRecipe>& GetDefaultRecipe() const override
+        {
+            return recommandedRecipes;
         }
 
         const std::vector<CraftsmanCommonRecipe>& GetCommonRecipe() const override

@@ -21,6 +21,7 @@ void AddSC_craftsman_recipe_loader();
 
 void AddSC_npc_craftsman_tailor();
 void AddSC_npc_craftsman_miner();
+void AddSC_npc_craftsman_blacksmith();
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
@@ -31,4 +32,5 @@ void AddCraftsmanScripts()
 
     AddSC_npc_craftsman_tailor();
     AddSC_npc_craftsman_miner();
+    AddSC_npc_craftsman_blacksmith();
 }

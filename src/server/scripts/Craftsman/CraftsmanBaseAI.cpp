@@ -524,13 +524,20 @@ void CraftsmanBaseAI::WhisperNoSuchItemFor(Player* player)
     me->Whisper(sCraftsmanTextMgr->GetText(player, CMTEXT_NO_SUCH_ITEM), LANG_UNIVERSAL, player);
 }
 
+void CraftsmanBaseAI::PrepareDefaultRecipeMenuItems(Player* player)
+{
+    const std::vector<CraftsmanCommonRecipe>& defaultRecipes = GetDefaultRecipe();
+    int matched = 0;
+    for (std::vector<CraftsmanCommonRecipe>::const_iterator it = defaultRecipes.begin(); it != defaultRecipes.end() && matched < 12; ++it)
+    {
+        if (AddRecipeGossipItemFor(player, *it))
+            ++matched;
+    }
+}
+
 uint CraftsmanBaseAI::PrepareRecipeMenuItems(Player* player, std::string keyword)
 {
-    if (trainerId == 0 || keyword.empty())
-        return 0;
-
-    const Trainer::Trainer* trainer = sObjectMgr->GetTrainer(trainerId);
-    if (trainer == nullptr)
+    if (keyword.empty())
         return 0;
 
     LocaleConstant locale = player->GetSession()->GetSessionDbcLocale();
@@ -538,48 +545,37 @@ uint CraftsmanBaseAI::PrepareRecipeMenuItems(Player* player, std::string keyword
     int matched = 0;
 
     const std::vector<CraftsmanRecipe>& recipes = sCraftsmanRecipeMgr->GetRecipesByPlayer(player);
-    for (std::vector<CraftsmanRecipe>::const_iterator it = recipes.begin(); it != recipes.end() && matched < 10; ++it)
+    for (std::vector<CraftsmanRecipe>::const_iterator it = recipes.begin(); it != recipes.end() && matched < 12; ++it)
     {
-        const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(it->spellId);
-        if (spellInfo == nullptr)
-            continue;
-
-        std::string name = it->name;
-        if (name.find(keyword) == std::string::npos)
-            continue;
-
-        uint32 price = GetSpellPrice(player, it->spellId);
-        Reagents reagents;
-        price += GetReagents(spellInfo, reagents);
-
-        AddGossipItemFor(player, GOSSIP_ICON_VENDOR, name, GOSSIP_SENDER_CRAFTSMAN_RECIPES, it->spellId, name, price, false);
-        ++matched;
+        if (AddRecipeGossipItemFor(player, *it, keyword))
+            ++matched;
     }
 
     const std::vector<CraftsmanCommonRecipe>& commonRecipes = GetCommonRecipe();
-    for (std::vector<CraftsmanCommonRecipe>::const_iterator it = commonRecipes.begin(); it != commonRecipes.end() && matched < 10; ++it)
+    for (std::vector<CraftsmanCommonRecipe>::const_iterator it = commonRecipes.begin(); it != commonRecipes.end() && matched < 12; ++it)
     {
-        const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(it->spellId);
-        if (spellInfo == nullptr)
-            continue;
-
-        uint32 artifactId = GetSpellArtifactId(spellInfo);
-        if (!artifactId)
-            continue;
-
-        std::string name = spellInfo->SpellName[locale];
-        if (name.find(keyword) == std::string::npos)
-            continue;
-
-        uint32 price = GetSpellPrice(player, it->spellId);
-        Reagents reagents;
-        price += GetReagents(spellInfo, reagents);
-
-        AddGossipItemFor(player, GOSSIP_ICON_VENDOR, name, GOSSIP_SENDER_CRAFTSMAN_RECIPES, it->spellId, name, price, false);
-        ++matched;
+        if (AddRecipeGossipItemFor(player, *it, keyword))
+            ++matched;
     }
 
     return matched;
+}
+
+bool CraftsmanBaseAI::AddRecipeGossipItemFor(Player* player, const CraftsmanCommonRecipe& recipe, const std::string& keyword)
+{
+    LocaleConstant locale = player->GetSession()->GetSessionDbcLocale();
+    const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(recipe.spellId);
+
+    std::string name = spellInfo->SpellName[locale];
+    if (!keyword.empty() && name.find(keyword) == std::string::npos)
+        return false;
+
+    uint32 price = GetSpellPrice(player, recipe.spellId);
+    Reagents reagents;
+    price += GetReagents(spellInfo, reagents);
+
+    AddGossipItemFor(player, GOSSIP_ICON_VENDOR, name, GOSSIP_SENDER_CRAFTSMAN_RECIPES, recipe.spellId, name, price, false);
+    return true;
 }
 
 uint32 CraftsmanBaseAI::GetSpellPrice(Player* player, uint32 spellId)

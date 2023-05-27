@@ -10,16 +10,20 @@
 
 class TC_GAME_API Player;
 
-struct TC_GAME_API CraftsmanRecipe
+struct TC_GAME_API CraftsmanCommonRecipe
+{
+    uint32 spellId;
+    uint32 skillRank;
+};
+
+struct TC_GAME_API CraftsmanRecipe : CraftsmanCommonRecipe
 {
     CraftsmanRecipe(Player* player, uint32 recipeId);
 
     Player* player;
     uint32 recipeId;
     std::string name;
-    uint32 spellId;
     uint32 skillId;
-    uint32 skillRank;
 };
 
 class TC_GAME_API CraftsmanRecipeMgr

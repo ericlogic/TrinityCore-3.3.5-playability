@@ -11,6 +11,7 @@ enum eCraftsmanText : uint32
 {
     CMTEXT_TAILORING_SERVICE    = 1000,     // Tailoring service
     CMTEXT_SMELTING_SERVICE     = 1001,     // Smelt ores
+    CMTEXT_BLACKSMITH_SERVICE   = 1002,     // Blacksmith service
     CMTEXT_CURRENT_KEYWORD      = 1100,     // Keyword: {0}
     CMTEXT_INPUT_KEYWORD        = 1101,     // <Click here to enter keyword for search>
     CMTEXT_NEED_REAGNETS        = 1102,     // You must supply {1} to make {0}.

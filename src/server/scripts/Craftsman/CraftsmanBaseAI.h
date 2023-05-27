@@ -43,11 +43,7 @@ enum CraftsmanGossip
 class TC_GAME_API Player;
 typedef std::map<uint32, uint32> Reagents;
 
-struct TC_GAME_API CraftsmanCommonRecipe
-{
-    uint32 spellId;
-    uint32 skillRank;
-};
+struct TC_GAME_API CraftsmanCommonRecipe;
 
 struct TC_GAME_API CraftsmanBaseAI : public ScriptedAI
 {
@@ -75,6 +71,7 @@ protected:
     void HandleRecipeLearnedSenderAction(Player* player, uint32 action);
 
     uint PrepareRecipeMenuItems(Player* player, std::string keyword);
+    bool AddRecipeGossipItemFor(Player* player, const CraftsmanCommonRecipe& recipe, const std::string& keyword = "");
 
     void CastCreateItemSpellFor(Player* player, uint32 spellId);
     void LearnRecipeFor(Player* player, uint32 recipeId);
@@ -84,14 +81,15 @@ protected:
     void WhisperStartWorkingFor(Player* player, uint32 artifactId);
     void WhisperNoSuchItemFor(Player* player);
 
-    virtual void PrepareDefaultRecipeMenuItems(Player* player) { };
+    virtual void PrepareDefaultRecipeMenuItems(Player* player);
     virtual void PrepareMainMenuItems(Player* player) = 0;
 
     virtual uint32 GetSpellPrice(Player* player, uint32 spellId);
     virtual uint32 GetSpellCount(uint32 spellId) { return 1; };
     virtual uint32 GetReagents(const SpellInfo* spellInfo, Reagents& reagents);
     virtual uint32 AddReagents(Reagents& reagents, uint32 itemId, uint32 count);
-    virtual const std::vector<CraftsmanCommonRecipe>& GetCommonRecipe() const;
+    virtual const std::vector<CraftsmanCommonRecipe>& GetDefaultRecipe() const = 0;
+    virtual const std::vector<CraftsmanCommonRecipe>& GetCommonRecipe() const = 0;
 
 protected:
     uint32 trainerId;

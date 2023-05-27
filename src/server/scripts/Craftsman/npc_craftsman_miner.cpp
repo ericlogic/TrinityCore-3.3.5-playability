@@ -1,4 +1,5 @@
 #include "CraftsmanBaseAI.h"
+#include "CraftsmanRecipeMgr.h"
 #include "CraftsmanTextMgr.h"
 #include "ScriptMgr.h"
 #include "ScriptedGossip.h"
@@ -27,7 +28,7 @@ static const std::vector<CraftsmanCommonRecipe> commonRecipes =
     { 29686, 375 },
     { 49258, 400 },
     { 55208, 450 },
-    { 55211, 450 }
+    { 55211, 450 },
 };
 
 class npc_craftsman_miner : public CreatureScript
@@ -58,6 +59,11 @@ public:
         uint32 GetSpellCount(uint32 spellId) override
         {
             return 10;
+        }
+
+        const std::vector<CraftsmanCommonRecipe>& GetDefaultRecipe() const override
+        {
+            return commonRecipes;
         }
 
         const std::vector<CraftsmanCommonRecipe>& GetCommonRecipe() const override
