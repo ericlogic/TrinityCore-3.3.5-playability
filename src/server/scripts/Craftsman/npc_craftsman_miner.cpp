@@ -3,6 +3,7 @@
 #include "CraftsmanTextMgr.h"
 #include "ScriptMgr.h"
 #include "ScriptedGossip.h"
+#include "SpellInfo.h"
 
 static const std::vector<CraftsmanCommonRecipe> commonRecipes =
 {
@@ -26,10 +27,27 @@ static const std::vector<CraftsmanCommonRecipe> commonRecipes =
     { 29361, 350 },
     { 49252, 350 },
     { 29686, 375 },
+    { 46353, 375 },
     { 49258, 400 },
     { 55208, 450 },
     { 55211, 450 },
 };
+
+static const std::map<uint32, Reagents> equivalents =
+{
+    {  2840, { {  2770,  1 } } },    // Copper Bar
+    {  3576, { {  2771,  1 } } },    // Tin Bar
+    {  3575, { {  2772,  1 } } },    // Iron Bar
+    { 12359, { { 10620,  1 } } },    // Thorium Bar
+    { 23445, { { 23424,  2 } } },    // Fel Iron Bar
+    { 23446, { { 23425,  2 } } },    // Eternium Bar
+    { 23447, { { 23427,  2 } } },    // Adamantite Bar
+    { 23449, { { 23426,  2 } } },    // Khorum Bar
+    { 23573, { { 23425, 20 } } },    // Hardened Adamantite Bar
+    { 41163, { { 36910,  2 } } },    // Titanium Bar
+};
+
+static std::map<uint32, SpellInfo> overrideSpellInfos;
 
 class npc_craftsman_miner : public CreatureScript
 {
@@ -49,6 +67,48 @@ public:
         {
             std::string tailingText = sCraftsmanTextMgr->GetText(player, CMTEXT_SMELTING_SERVICE);
             AddGossipItemFor(player, GOSSIP_ICON_CHAT, tailingText, GOSSIP_SENDER_CRAFTSMAN_MAIN, GOSSIP_ACTION_OEM_SERVICE);
+        }
+
+        const SpellInfo* GetSpellInfoOverride(const SpellInfo* spellInfo) override {
+            if (!spellInfo->RequiresSpellFocus)
+                return spellInfo;
+
+            std::map<uint32, SpellInfo>::iterator it = overrideSpellInfos.find(spellInfo->Id);
+            if (it != overrideSpellInfos.end())
+                return &(it->second);
+
+            overrideSpellInfos.insert({spellInfo->Id, *spellInfo});
+            SpellInfo* overrideSpellInfo = &overrideSpellInfos.at(spellInfo->Id);
+            overrideSpellInfo->RequiresSpellFocus = 0;
+            return overrideSpellInfo;
+        }
+
+        uint32 AddReagents(Reagents& reagents, uint32 itemId, uint32 count) override
+        {
+            uint32 money = 0;
+
+            std::map<uint32, Reagents>::const_iterator eqitor = equivalents.find(itemId);
+
+            if (eqitor != equivalents.end())
+            {
+                for (Reagents::const_iterator it = eqitor->second.begin(); it  != eqitor->second.end(); ++it)
+                {
+                    if (it->first != 0)
+                    {
+                        reagents[it->first] += it->second * count;
+                    }
+                    else
+                    {
+                        money += it->second * count;
+                    }
+                }
+            }
+            else
+            {
+                reagents[itemId] += count;
+            }
+
+            return money;
         }
 
         uint32 GetSpellPrice(Player *player, uint32 spellId) override

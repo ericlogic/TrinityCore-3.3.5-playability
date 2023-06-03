@@ -11,6 +11,7 @@ VALUES
 	(1000, 'Tailoring service'),
 	(1001, 'Smelt ores'),
 	(1002, 'Blacksmith service'),
+	(1003, 'Leatherworking service'),
 	(1100, 'Keyword: {0}'),
 	(1101, '<Click here to enter keyword for search>'),
 	(1102, 'You must supply {1} to make {0}.'),

@@ -44,6 +44,7 @@ class TC_GAME_API Player;
 typedef std::map<uint32, uint32> Reagents;
 
 struct TC_GAME_API CraftsmanCommonRecipe;
+class TC_GAME_API SpellInfo;
 
 struct TC_GAME_API CraftsmanBaseAI : public ScriptedAI
 {
@@ -84,6 +85,7 @@ protected:
     virtual void PrepareDefaultRecipeMenuItems(Player* player);
     virtual void PrepareMainMenuItems(Player* player) = 0;
 
+    virtual const SpellInfo* GetSpellInfoOverride(const SpellInfo* spellInfo) { return spellInfo; }
     virtual uint32 GetSpellPrice(Player* player, uint32 spellId);
     virtual uint32 GetSpellCount(uint32 spellId) { return 1; };
     virtual uint32 GetReagents(const SpellInfo* spellInfo, Reagents& reagents);
@@ -100,6 +102,7 @@ private:
     Player* customer;
     Reagents reagents;
     uint32 artifactId;
+    uint32 artifactCount;
     uint32 count;
     uint32 cost;
 

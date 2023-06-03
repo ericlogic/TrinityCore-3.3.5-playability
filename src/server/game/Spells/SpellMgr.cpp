@@ -220,6 +220,9 @@ SpellInfo const* SpellMgr::GetSpellForDifficultyFromSpell(SpellInfo const* spell
         return nullptr;
 
     uint32 newSpellId = GetSpellIdForDifficulty(spell->Id, caster);
+    if (newSpellId == spell->Id)
+        return spell;
+
     SpellInfo const* newSpell = GetSpellInfo(newSpellId);
     if (!newSpell)
     {

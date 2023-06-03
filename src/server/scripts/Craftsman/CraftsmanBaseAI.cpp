@@ -29,6 +29,30 @@ uint32 GetSpellArtifactId(const SpellInfo *spell)
     return 0;
 }
 
+void GetSpellArtifact(const SpellInfo* spell, uint32& id, uint32& count) {
+    for (uint8 i = 0; i != MAX_SPELL_EFFECTS; ++i)
+    {
+        ItemTemplate const* itemTemplate = nullptr;
+        switch (spell->_effects[i].Effect)
+        {
+            case SPELL_EFFECT_CREATE_ITEM:
+            case SPELL_EFFECT_CREATE_ITEM_2:
+                if (!spell->_effects[i].ItemType)
+                    break;
+
+                itemTemplate = sObjectMgr->GetItemTemplate(spell->_effects[i].ItemType);
+                if (!itemTemplate)
+                    break;
+
+                id = spell->_effects[i].ItemType;
+                count = std::clamp<uint32>(spell->_effects[i].CalcValue(), 1u, itemTemplate->GetMaxStackSize());
+                return;
+            default:
+                break;
+        }
+    }
+}
+
 uint32 GetSpellPriceByRank(uint32 rank)
 {
     if (rank > 425) return 1500000;
@@ -180,6 +204,8 @@ void CraftsmanBaseAI::SpellHitTarget(WorldObject* wtarget, SpellInfo const* spel
     this->reagents.clear();
     uint32 artifactId = this->artifactId;
     this->artifactId = 0;
+    uint32 artifactCount = this->artifactCount;
+    this->artifactCount = 0;
     uint32 count = this->count;
     this->count = 0;
     uint32 cost = this->cost;
@@ -204,7 +230,7 @@ void CraftsmanBaseAI::SpellHitTarget(WorldObject* wtarget, SpellInfo const* spel
 
     // Check and find slots for created items
     ItemPosCountVec dest;
-    if (!CheckInventorySlotForPlayer(player, artifactId, count, &dest))
+    if (!CheckInventorySlotForPlayer(player, artifactId, count * artifactCount, &dest))
     {
         WhisperNotEnoughSlotFor(player);
         return;
@@ -218,7 +244,7 @@ void CraftsmanBaseAI::SpellHitTarget(WorldObject* wtarget, SpellInfo const* spel
 
     // Create new items for customer.
     Item* pItem = player->StoreNewItem(dest, artifactId, true, 0);
-    player->SendNewItem(pItem, count, true, false, true);
+    player->SendNewItem(pItem, count * artifactCount, true, false, true);
 
     SendRecipeGossipMenuFor(player, sCraftsmanRecipeMgr->GetKeyword(player));
 }
@@ -419,7 +445,8 @@ void CraftsmanBaseAI::CastCreateItemSpellFor(Player* player, uint32 spellId)
 {
     // Get spell info and artifactId
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
-    uint32 artifactId = GetSpellArtifactId(spellInfo);
+    uint32 artifactId = 0, artifactCount = 0;
+    GetSpellArtifact(spellInfo, artifactId, artifactCount);
 
     // Calculate reagents and price
     Reagents reagents;
@@ -445,7 +472,7 @@ void CraftsmanBaseAI::CastCreateItemSpellFor(Player* player, uint32 spellId)
     }
 
     // Check slots for created items
-    if (!CheckInventorySlotForPlayer(player, artifactId, count))
+    if (!CheckInventorySlotForPlayer(player, artifactId, count * artifactCount))
     {
         CloseGossipMenuFor(player);
         WhisperNotEnoughSlotFor(player);
@@ -456,13 +483,26 @@ void CraftsmanBaseAI::CastCreateItemSpellFor(Player* player, uint32 spellId)
     this->customer = player;
     this->reagents = reagents;
     this->artifactId = artifactId;
+    this->artifactCount = artifactCount;
     this->count = count;
     this->cost = cost;
 
     // Cast spell (npc animation)
+    spellInfo = GetSpellInfoOverride(spellInfo);
     Spell* spell = new Spell(me, spellInfo, TRIGGERED_NONE, player->GetGUID());
     SpellCastTargets targets;
-    spell->prepare(targets);
+    SpellCastResult castResult = spell->prepare(targets);
+    if (castResult != SPELL_CAST_OK) {
+        this->customer = nullptr;
+        this->reagents.clear();
+        this->artifactId = 0;
+        this->artifactCount = 0;
+        this->count = 0;
+        this->cost = 0;
+        SendBusyGossipMenuFor(player);
+        me->Whisper(fmt::format("Failed to cast craft spell: {0}", castResult), LANG_UNIVERSAL, player);
+        return;
+    }
 
     // Close gossip menu and whisper to customer
     CloseGossipMenuFor(player);

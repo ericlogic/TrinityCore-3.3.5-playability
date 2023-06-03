@@ -9,20 +9,21 @@
 
 enum eCraftsmanText : uint32
 {
-    CMTEXT_TAILORING_SERVICE    = 1000,     // Tailoring service
-    CMTEXT_SMELTING_SERVICE     = 1001,     // Smelt ores
-    CMTEXT_BLACKSMITH_SERVICE   = 1002,     // Blacksmith service
-    CMTEXT_CURRENT_KEYWORD      = 1100,     // Keyword: {0}
-    CMTEXT_INPUT_KEYWORD        = 1101,     // <Click here to enter keyword for search>
-    CMTEXT_NEED_REAGNETS        = 1102,     // You must supply {1} to make {0}.
-    CMTEXT_NOT_ENOUGH_SLOT      = 1103,     // Your bag is full!
-    CMTEXT_START_WORKING        = 1104,     // {0} is being made, please wait...
-    CMTEXT_OFFER_RECIPE         = 1105,     // I have a recipe.
-    CMTEXT_BACK                 = 1106,     // <Back>
-    CMTEXT_NO_SUCH_ITEM         = 1107,     // You don't have such item.
-    CMTEXT_RECIPE_LEARNED       = 1108,     // I've learned it, thank you!
-    CMTEXT_WELL                 = 1109,     // Well!
-    CMTEXT_UR_WELCOME           = 1110,     // You are welcome!
+    CMTEXT_TAILORING_SERVICE        = 1000,     // Tailoring service
+    CMTEXT_SMELTING_SERVICE         = 1001,     // Smelt ores
+    CMTEXT_BLACKSMITH_SERVICE       = 1002,     // Blacksmith service
+    CMTEXT_LEATHERWORKING_SERVICE   = 1003,     // Leatherworking service
+    CMTEXT_CURRENT_KEYWORD          = 1100,     // Keyword: {0}
+    CMTEXT_INPUT_KEYWORD            = 1101,     // <Click here to enter keyword for search>
+    CMTEXT_NEED_REAGNETS            = 1102,     // You must supply {1} to make {0}.
+    CMTEXT_NOT_ENOUGH_SLOT          = 1103,     // Your bag is full!
+    CMTEXT_START_WORKING            = 1104,     // {0} is being made, please wait...
+    CMTEXT_OFFER_RECIPE             = 1105,     // I have a recipe.
+    CMTEXT_BACK                     = 1106,     // <Back>
+    CMTEXT_NO_SUCH_ITEM             = 1107,     // You don't have such item.
+    CMTEXT_RECIPE_LEARNED           = 1108,     // I've learned it, thank you!
+    CMTEXT_WELL                     = 1109,     // Well!
+    CMTEXT_UR_WELCOME               = 1110,     // You are welcome!
 };
 
 class TC_GAME_API Player;

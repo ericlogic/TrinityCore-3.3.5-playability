@@ -236,12 +236,31 @@ static const std::map<uint32, Reagents> equivalents =
     { 12644, { { 12365,  4 } } },                   // Dense Grinding Stone
 };
 
-static const std::vector<uint32> materialSpellIds = {
+static const std::vector<uint32> materialSpellIds =
+{
     3470,   // Rough Grinding Stone
     3478,   // Coarse Grinding Stone
     3486,   // Heavy Grinding Stone
     7966,   // Solid Grinding Stone
     12644,  // Dense Grinding Stone
+};
+
+static const std::vector<uint32> consumableSpellIds =
+{
+    2660,
+    3115,
+    2665,
+    3116,
+    2674,
+    3117,
+    9918,
+    9921,
+    16641,
+    16640,
+    29654,
+    34607,
+    22757,
+    29656,
 };
 
 class npc_craftsman_blacksmith : public CreatureScript
@@ -254,8 +273,8 @@ public:
         npc_craftsman_blacksmithAI(Creature* creature) : CraftsmanBaseAI(creature)
         {
             trainerId = 28699;
-            skillId = 197;
-            recipeSubclass = 2;
+            skillId = 164;
+            recipeSubclass = 4;
         }
 
         void PrepareMainMenuItems(Player* player) override
@@ -306,6 +325,9 @@ public:
         {
             if (std::find(materialSpellIds.begin(), materialSpellIds.end(), spellId) != materialSpellIds.end())
                 return 10;
+
+            if (std::find(consumableSpellIds.begin(), consumableSpellIds.end(), spellId) != consumableSpellIds.end())
+                return 20;
 
             return 1;
         }
