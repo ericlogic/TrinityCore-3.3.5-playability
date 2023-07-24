@@ -10,7 +10,7 @@ static const std::vector<CraftsmanCommonRecipe> commonRecipes =
     {  2152,   1 },
     {  9058,   1 },
     {  9059,   1 },
-    {  5957,   1 },
+    {  7126,   1 },
     {  2149,   1 },
     {  2153,  15 },
     {  3753,  25 },
