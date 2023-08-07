@@ -235,15 +235,26 @@ static const std::map<uint32, Reagents> equivalents =
     {  4236, { {  4235,  1 }, {  4289,  3 } } },    // Cured Heavy Hide
     {  8172, { {  8169,  1 }, {  8150,  1 } } },    // Cured Thick Hide
     { 15407, { {  8171,  1 }, {  8150,  1 } } },    // Cured Rugged Hide
+    { 23793, { { 21887,  5 } } },                   // Heavy Knothide Leather
+    { 38425, { { 33568,  6 } } },                   // Heavy Borean Leather
 };
 
 static const std::vector<uint32> materialSpellIds =
 {
-    4231,       // Cured Light Hide
-    4233,       // Cured Medium Hide
-    4236,       // Cured Heavy Hide
-    8172,       // Cured Thick Hide
-    15407,      // Cured Rugged Hide
+    2881,       // Light Leather
+    3816,       // Cured Light Hide
+    20648,      // Medium Leather
+    3817,       // Cured Medium Hide
+    20649,      // Heavy Leather
+    3818,       // Cured Heavy Hide
+    20650,      // Thick Leather
+    10482,      // Cured Thick Hide
+    22331,      // Rugged Leather
+    19047,      // Cured Rugged Hide
+    32454,      // Knothide Leather
+    32455,      // Heavy Knothide Leather
+    64661,      // Borean Leather
+    50936,      // Heavy Borean Leather
 };
 
 static const std::vector<uint32> consumableSpellIds =
