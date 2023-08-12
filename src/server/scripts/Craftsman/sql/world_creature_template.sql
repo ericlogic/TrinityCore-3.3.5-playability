@@ -62,7 +62,7 @@ UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry
 UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 33640;
 UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_miner' WHERE `entry` = 33682;
 
--- Blacksmith
+-- Blacksmithes
 UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_blacksmith' WHERE `entry` = 514;
 UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_blacksmith' WHERE `entry` = 1241;
 UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_blacksmith' WHERE `entry` = 2836;
@@ -104,7 +104,7 @@ UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_blacksmith' WHERE `
 UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_blacksmith' WHERE `entry` = 33631;
 UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_blacksmith' WHERE `entry` = 33675;
 
--- Tanner
+-- Tanners
 UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tanner' WHERE `entry` = 1385;
 UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tanner' WHERE `entry` = 1632;
 UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tanner' WHERE `entry` = 3007;
@@ -142,3 +142,39 @@ UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tanner' WHERE `entr
 UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tanner' WHERE `entry` = 33612;
 UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tanner' WHERE `entry` = 33635;
 UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_tanner' WHERE `entry` = 33681;
+
+-- Alchemists
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 1215;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 1386;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 1470;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 2132;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 2391;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 2837;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 3009;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 3184;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 3347;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 3603;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 3964;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 4160;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 4611;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 4900;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 5032;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 5177;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 5499;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 7948;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 16161;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 16588;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 16642;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 16723;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 17215;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 18802;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 26903;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 26951;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 26975;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 26987;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 27023;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 27029;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 28703;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 33588;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 33630;
+UPDATE `creature_template` SET `ScriptName` = 'npc_craftsman_alchemist' WHERE `entry` = 33674;
