@@ -1,6 +1,7 @@
 #include "bpet_ai.h"
 #include "bot_GridNotifiers.h"
 #include "botmgr.h"
+#include "LFGMgr.h"
 #include "Log.h"
 #include "Map.h"
 #include "MotionMaster.h"
@@ -81,6 +82,7 @@ bot_pet_ai::bot_pet_ai(Creature* creature) : CreatureAI(creature)
     m_botCommandState = BOT_COMMAND_FOLLOW;
     regenTimer = 0;
     waitTimer = 0;
+    _moveBehindTimer = 0;
     indoorsTimer = 0;
     outdoorsTimer = 0;
     GC_Timer = 0;
@@ -91,6 +93,8 @@ bot_pet_ai::bot_pet_ai(Creature* creature) : CreatureAI(creature)
     checkAurasTimer = 0;
 
     _wanderer = false;
+
+    _auraRaidUpdateMask = 0;
 
     myType = 0;
     petOwner = nullptr;
@@ -134,9 +138,9 @@ void bot_pet_ai::_calculatePos(Position& pos) const
 
     float x,y,z;
     //destination
-    if (!petOwner->GetMotionMaster()->GetDestination(x, y, z) || petOwner->GetTransport())
-        petOwner->GetPosition(x, y, z);
+    petOwner->GetPosition(x, y, z);
     //relative angle
+    uint32 movFlags = petOwner->m_movementInfo.GetMovementFlags();
     float o = petOwner->GetOrientation() + PET_FOLLOW_ANGLE;
     uint8 posNum = petOwner->GetBotAI()->GetPetPositionNumber(me);
     if (petOwner->GetBotClass() == BOT_CLASS_DEATH_KNIGHT)
@@ -156,6 +160,12 @@ void bot_pet_ai::_calculatePos(Position& pos) const
     //distance
     x += (PET_FOLLOW_DIST + me->GetCombatReach() + petOwner->GetCombatReach()) * std::cos(o);
     y += (PET_FOLLOW_DIST + me->GetCombatReach() + petOwner->GetCombatReach()) * std::sin(o);
+    if (movFlags & MOVEMENTFLAG_FORWARD)
+    {
+        static float const aheadDist = 6.f;
+        x = x + aheadDist * std::cos(petOwner->GetOrientation());
+        y = y + aheadDist * std::sin(petOwner->GetOrientation());
+    }
     if (!petOwner->GetTransport())
         me->UpdateGroundPositionZ(x, y, z);
     if (me->GetPositionZ() < z)
@@ -165,13 +175,13 @@ void bot_pet_ai::_calculatePos(Position& pos) const
     pos.m_positionY = y;
     pos.m_positionZ = z;
 }
-void bot_pet_ai::SetBotCommandState(uint8 st, bool force, Position* newpos)
+void bot_pet_ai::SetBotCommandState(uint32 st, bool force, Position* newpos)
 {
-    if (!me->IsAlive())
-        return;
-
-    if (JumpingOrFalling())
-        return;
+    if (!(st & (BOT_COMMAND_INACTION)))
+    {
+        if (!me->IsAlive() || JumpingOrFalling())
+            return;
+    }
 
     switch (myType)
     {
@@ -188,7 +198,7 @@ void bot_pet_ai::SetBotCommandState(uint8 st, bool force, Position* newpos)
         if (me->isMoving() && Rand() > 10) return;
 
         float x,y,z;
-        if (petOwner->GetMotionMaster()->GetDestination(x, y, z) && me->GetDistance(x, y, z) < 6.f)
+        if (petOwner->GetMotionMaster()->GetDestination(x, y, z) && (me->GetDistance(x, y, z) < 6.f || me->GetDistance(x, y, z) > 20.f))
         {
             if (!me->HasUnitState(UNIT_STATE_FOLLOW))
                 me->GetMotionMaster()->MoveFollow(petOwner, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
@@ -206,6 +216,14 @@ void bot_pet_ai::SetBotCommandState(uint8 st, bool force, Position* newpos)
             me->GetMotionMaster()->MovePoint(petOwner->GetMapId(), movepos);
         }
         RemoveBotCommandState(BOT_COMMAND_STAY | BOT_COMMAND_FULLSTOP | BOT_COMMAND_ATTACK | BOT_COMMAND_COMBATRESET);
+    }
+    else if (st & BOT_COMMAND_INACTION)
+    {
+        uint32 removeMask = BOT_COMMAND_INACTION & GetBotCommandState();
+        st &= ~removeMask;
+        RemoveBotCommandState(removeMask | BOT_COMMAND_MASK_NOCAST_ANY | BOT_COMMAND_STAY | BOT_COMMAND_FULLSTOP | BOT_COMMAND_ATTACK);
+        me->AttackStop();
+        me->InterruptNonMeleeSpells(true);
     }
     else if (st & BOT_COMMAND_FULLSTOP)
     {
@@ -232,7 +250,7 @@ void bot_pet_ai::SetBotCommandState(uint8 st, bool force, Position* newpos)
     m_botCommandState |= st;
 }
 
-void bot_pet_ai::RemoveBotCommandState(uint8 st)
+void bot_pet_ai::RemoveBotCommandState(uint32 st)
 {
     m_botCommandState &= ~st;
 }
@@ -1420,7 +1438,7 @@ bool bot_pet_ai::IsInBotParty(Unit const* unit) const
     //Player-controlled creature case
     if (Creature const* cre = unit->ToCreature())
     {
-        ObjectGuid ownerGuid = unit->GetOwnerGUID() ? unit->GetOwnerGUID() : unit->GetCreatorGUID();
+        ObjectGuid ownerGuid = unit->GetOwnerGUID() ? unit->GetOwnerGUID() : unit->GetCreator() ? unit->GetCreator()->GetGUID() : ObjectGuid::Empty;
         //controlled by master
         if (ownerGuid == petOwner->GetBotOwner()->GetGUID())
             return true;
@@ -1479,7 +1497,7 @@ void bot_pet_ai::RefreshAura(uint32 spellId, int8 count, Unit* target) const
 //All code above 'x = _getTarget() call must not dereference opponent since it can be invalid
 Unit* bot_pet_ai::_getTarget(bool &reset) const
 {
-    if (petOwner->GetBotAI()->HasBotCommandState(BOT_COMMAND_FULLSTOP))
+    if (petOwner->GetBotAI()->HasBotCommandState(BOT_COMMAND_FULLSTOP | BOT_COMMAND_INACTION))
         return nullptr;
     if (petOwner->GetBotAI()->GetEngageTimer() > lastdiff)
         return nullptr;
@@ -1676,18 +1694,15 @@ void bot_pet_ai::CheckAttackState()
 
 void bot_pet_ai::MoveBehind(Unit const* target) const
 {
-    if (HasBotCommandState(BOT_COMMAND_MASK_UNMOVING)) return;
-    if (!IsPetMelee() || CCed(me, true)) return;
-    if (JumpingOrFalling()) return;
+    if (_moveBehindTimer > lastdiff || HasBotCommandState(BOT_COMMAND_MASK_UNMOVING) || !IsPetMelee() || CCed(me, true) || JumpingOrFalling())
+        return;
 
-    if (target->GetVictim() != me && !CCed(target) &&
-        target->IsWithinCombatRange(me, ATTACK_DISTANCE) &&
-        target->HasInArc(float(M_PI), me))
+    if (target->GetVictim() != me && !CCed(target) && target->IsWithinCombatRange(me, ATTACK_DISTANCE) && target->HasInArc(float(M_PI), me))
     {
         float x,y,z;
         target->GetNearPoint(me, x, y, z, me->GetCombatReach(), me->GetAbsoluteAngle(target));
         me->GetMotionMaster()->MovePoint(me->GetMapId(), x, y, z);
-        waitTimer = 500;
+        const_cast<bot_pet_ai*>(this)->_moveBehindTimer = urand(1000, 4000);
     }
 }
 bool bot_pet_ai::_canRegenerate() const
@@ -1802,7 +1817,7 @@ void bot_pet_ai::RegeneratePetFocus()
         if (curValue == maxValue || regenTimer >= REGEN_CD)
             me->SetPower(POWER_FOCUS, curValue);
         else
-            me->UpdateUInt32Value(UNIT_FIELD_POWER1 + POWER_FOCUS, curValue);
+            me->UpdateUInt32Value(UNIT_FIELD_POWER1 + uint16(POWER_FOCUS), curValue);
     }
 }
 
@@ -1835,7 +1850,7 @@ void bot_pet_ai::RegeneratePetEnergy()
         if (curValue == maxValue || regenTimer >= REGEN_CD)
             me->SetPower(POWER_ENERGY, curValue);
         else
-            me->UpdateUInt32Value(UNIT_FIELD_POWER1 + POWER_ENERGY, curValue);
+            me->UpdateUInt32Value(UNIT_FIELD_POWER1 + uint16(POWER_ENERGY), curValue);
     }
 }
 //////////
@@ -2163,13 +2178,10 @@ bool bot_pet_ai::IsTank(Unit const* unit) const
     {
         if (Group const* gr = player->GetGroup())
         {
-            if (gr->isRaidGroup())
-            {
-                Group::MemberSlotList const& slots = gr->GetMemberSlots();
-                for (Group::member_citerator itr = slots.begin(); itr != slots.end(); ++itr)
-                    if (itr->guid == unit->GetGUID())
-                        return itr->flags & MEMBER_FLAG_MAINTANK;
-            }
+            if (gr->GetMemberFlags(unit->GetGUID()) & MEMBER_FLAG_MAINTANK)
+                return true;
+            if (gr->isLFGGroup() && sLFGMgr->GetRoles(unit->GetGUID()) & lfg::PLAYER_ROLE_TANK)
+                return true;
         }
     }
 
@@ -2256,6 +2268,7 @@ void bot_pet_ai::IsSummonedBy(WorldObject* summoner)
     //myType = petOwner->GetBotAI()->GetAIMiscValue(BOTAI_MISC_PET_TYPE);
     //ASSERT(myType);
     me->setActive(true);
+    me->SetUnitFlag(UNIT_FLAG_PLAYER_CONTROLLED);
     ASSERT(!me->GetBotAI());
     ASSERT(!me->GetBotPetAI());
     me->SetBotPetAI(this);
@@ -2267,6 +2280,9 @@ void bot_pet_ai::IsSummonedBy(WorldObject* summoner)
         me->Relocate(bot_ai::GetAbsoluteTransportPosition(petOwner));
         me->AddUnitState(UNIT_STATE_IGNORE_PATHFINDING);
     }
+    //Send group update if not a minion
+    if (petOwner->GetBotAI()->GetBotsPet() == me && petOwner->GetBotAI()->GetGroup())
+        BotMgr::SetBotGroupUpdateFlag(petOwner, GROUP_UPDATE_PET);
 }
 //This function is called after Spell::SendSpellCooldown() and Spell::DoAllEffects...() call
 void bot_pet_ai::OnBotPetSpellGo(Spell const* spell, bool ok)
@@ -2478,22 +2494,10 @@ bool bot_pet_ai::GlobalUpdate(uint32 diff)
     if (!opponent && !IsCasting())
     {
         _calculatePos(movepos);
-        if (!petOwner->isMoving())
-        {
-            if (me->GetExactDist(&movepos) > 5.f)
-                SetBotCommandState(BOT_COMMAND_FOLLOW, true, &movepos);
-            else
-                closeToOwner = !me->isMoving();
-        }
+        if (me->GetExactDist(&movepos) > 5.f)
+            SetBotCommandState(BOT_COMMAND_FOLLOW, true, &movepos);
         else
-        {
-            Position destPos;
-            me->GetMotionMaster()->GetDestination(destPos.m_positionX, destPos.m_positionY, destPos.m_positionZ);
-            if (destPos.GetExactDist(&movepos) > 5.f)
-                SetBotCommandState(BOT_COMMAND_FOLLOW, true, &movepos);
-            else
-                closeToOwner = !me->isMoving();
-        }
+            closeToOwner = !me->isMoving();
     }
     if (closeToOwner || me->IsInCombat())
     {
@@ -2508,7 +2512,8 @@ bool bot_pet_ai::GlobalUpdate(uint32 diff)
     if (HasBotCommandState(BOT_COMMAND_FULLSTOP))
         return false;
 
-    CheckAttackState();
+    if (!HasBotCommandState(BOT_COMMAND_INACTION))
+        CheckAttackState();
 
     //second alive check - CheckAttackState() can cause bot to die
     if (!me->IsAlive())
@@ -2551,6 +2556,9 @@ bool bot_pet_ai::GlobalUpdate(uint32 diff)
 
     GenerateRand();
 
+    if (HasBotCommandState(BOT_COMMAND_INACTION))
+        return false;
+
     return true;
 }
 
@@ -2562,6 +2570,7 @@ void bot_pet_ai::CommonTimers(uint32 diff)
     if (GC_Timer > diff)            GC_Timer -= diff;
     if (checkAurasTimer > diff)     checkAurasTimer -= diff;
     if (waitTimer > diff)           waitTimer -= diff;
+    if (_moveBehindTimer > diff)    _moveBehindTimer -= diff;
 
     if (_updateTimerMedium > diff)  _updateTimerMedium -= diff;
     if (_updateTimerEx1 > diff)     _updateTimerEx1 -= diff;

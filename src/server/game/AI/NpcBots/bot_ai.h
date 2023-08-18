@@ -5,6 +5,7 @@
 
 #include "CreatureAI.h"
 #include "EventProcessor.h"
+#include "GroupReference.h"
 #include "ItemDefines.h"
 #include "Position.h"
 
@@ -34,6 +35,7 @@ class Aura;
 class Battleground;
 class DamageInfo;
 class GameObject;
+class Group;
 class Item;
 class Spell;
 class SpellCastTargets;
@@ -105,18 +107,18 @@ class bot_ai : public CreatureAI
         void CheckOwnerExpiry();
         uint8 GetBotClass() const { return _botclass; }
         uint32 GetLastDiff() const { return lastdiff; }
-        virtual void UpdateDeadAI(uint32 /*diff*/) {}
+        virtual void UpdateDeadAI(uint32 diff);
         void ReturnHome() { _atHome = false; }
         void CommonTimers(uint32 diff);
         void ResetBotAI(uint8 resetType);
         void KillEvents(bool force);
-        void BotMovement(BotMovementType type, Position const* pos, Unit* target = nullptr, bool generatePath = true) const;
+        void BotMovement(BotMovementType type, Position const* pos, Unit* target = nullptr, bool generatePath = true, float speed = 0.0f) const;
         bool CanBotMoveVehicle() const;
         void MoveToSendPosition(uint32 point_id);
         void MoveToSendPosition(Position const& mpos);
         void MoveToLastSendPosition() { MoveToSendPosition(sendlastpos); }
         void MarkSendPosition(uint32 point_id);
-        void SetBotCommandState(uint32 st, bool force = false, Position* newpos = nullptr);
+        void SetBotCommandState(uint32 st, bool force = false, Position* newpos = nullptr, float* speed = nullptr);
         void RemoveBotCommandState(uint32 st);
         bool HasBotCommandState(uint32 st) const { return (_botCommandState & st); }
         void SetBotAwaitState(uint8 state);
@@ -165,7 +167,28 @@ class bot_ai : public CreatureAI
         bool IsWanderer() const { return _wanderer; }
         void SetWanderer();
         WanderNode const* GetNextTravelNode(Position const* from, bool random) const;
+        WanderNode const* GetNextBGTravelNode() const;
         void OnWanderNodeReached();
+        void OnBotEnterBattleground();
+
+        Group* GetGroup() { return _group.getTarget(); }
+        Group const* GetGroup() const { return const_cast<Group const*>(_group.getTarget()); }
+        void SetGroup(Group* group, int8 subgroup);
+        uint8 GetSubGroup() const { return _group.getSubGroup(); }
+        void SetSubGroup(uint8 subgroup) { _group.setSubGroup(subgroup); }
+        void SetGroupUpdateFlag(uint32 flag) { _groupUpdateMask |= flag; }
+        uint32 GetGroupUpdateFlag() const { return _groupUpdateMask; }
+        uint64 GetAuraUpdateMaskForRaid() const { return _auraRaidUpdateMask; }
+        void SetAuraUpdateMaskForRaid(uint8 slot) { _auraRaidUpdateMask |= (uint64(1) << slot); }
+        void ResetAuraUpdateMaskForRaid() { _auraRaidUpdateMask = 0; }
+        void SendUpdateToOutOfRangeBotGroupMembers();
+        void SetBattlegroundOrBattlefieldRaid(Group* group, int8 subgroup);
+        void RemoveFromBattlegroundOrBattlefieldRaid();
+        Group* GetOriginalGroup() const { return _originalGroup.getTarget(); }
+        void SetOriginalGroup(Group* group, int8 subgroup);
+        uint8 GetOriginalSubGroup() const { return _originalGroup.getSubGroup(); }
+        void SetOriginalSubGroup(uint8 subgroup) { _originalGroup.setSubGroup(subgroup); }
+
         Battleground* GetBG() const { return _bg; }
         void SetBG(Battleground* bg) { _bg = bg; }
 
@@ -305,6 +328,7 @@ class bot_ai : public CreatureAI
         bool IsPointedTarget(Unit const* target, uint8 targetFlags) const;
         bool IsPointedHealTarget(Unit const* target) const;
         bool IsPointedTankingTarget(Unit const* target) const;
+        bool IsPointedOffTankingTarget(Unit const* target) const;
         bool IsPointedDPSTarget(Unit const* target) const;
         bool IsPointedRangedDPSTarget(Unit const* target) const;
         bool IsPointedNoDPSTarget(Unit const* target) const;
@@ -479,8 +503,6 @@ class bot_ai : public CreatureAI
         void BotJumpInPlaceInFrontOf(Position const* pos, float speedXY, float maxHeight);
         void DismountBot();
 
-        void BuildGrouUpdatePacket(WorldPacket* data);
-
         void BotSay(const std::string &text, Player const* target = nullptr) const;
         void BotWhisper(const std::string &text, Player const* target = nullptr) const;
         void BotYell(const std::string &text, Player const* target = nullptr) const;
@@ -573,7 +595,7 @@ class bot_ai : public CreatureAI
 
         bool _canCureTarget(Unit const* target, uint32 cureSpell) const;
         void _getBotDispellableAuraList(Unit const* target, uint32 dispelMask, std::list<Aura const*> &dispelList) const;
-        void _calculatePos(Unit const* followUnit, Position& pos) const;
+        void _calculatePos(Unit const* followUnit, Position& pos, float* speed = nullptr) const;
         uint32 _selectMountSpell() const;
         void _updateMountedState();
         void _updateStandState() const;
@@ -650,6 +672,7 @@ class bot_ai : public CreatureAI
         //timers
         uint32 _reviveTimer, _powersTimer, _chaseTimer, _engageTimer, _potionTimer;
         uint32 lastdiff, checkAurasTimer, checkMasterTimer, roleTimer, ordersTimer, regenTimer, _updateTimerMedium, _updateTimerEx1;
+        uint32 _moveBehindTimer;
         uint32 _wmoAreaUpdateTimer;
         uint32 waitTimer;
         uint32 itemsAutouseTimer;
@@ -657,6 +680,7 @@ class bot_ai : public CreatureAI
         uint32 indoorsTimer;
         uint32 outdoorsTimer;
         uint32 _contestedPvPTimer;
+        uint32 _groupUpdateTimer;
         //save timers
         uint32 _saveDisabledSpellsTimer;
 
@@ -680,6 +704,11 @@ class bot_ai : public CreatureAI
         uint8 _baseLevel;
         WanderNode const* _travel_node_last;
         WanderNode const* _travel_node_cur;
+
+        uint32 _groupUpdateMask;
+        uint64 _auraRaidUpdateMask;
+        GroupBotReference _group;
+        GroupBotReference _originalGroup;
         Battleground* _bg;
 
         float _energyFraction;
