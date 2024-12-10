@@ -8,7 +8,7 @@
 #include <map>
 
 namespace Trainer {
-    class TC_GAME_API Spell;
+    struct TC_GAME_API Spell;
 }
 
 class TC_GAME_API SpellInfo;
@@ -71,7 +71,7 @@ protected:
     void HandleAlreadyLearnedSenderAction(Player* player, uint32 action);
     void HandleRecipeLearnedSenderAction(Player* player, uint32 action);
 
-    uint PrepareRecipeMenuItems(Player* player, std::string keyword);
+    uint32 PrepareRecipeMenuItems(Player* player, std::string keyword);
     bool AddRecipeGossipItemFor(Player* player, const CraftsmanCommonRecipe& recipe, const std::string& keyword = "");
 
     void CastCreateItemSpellFor(Player* player, uint32 spellId);
@@ -87,7 +87,7 @@ protected:
 
     virtual const SpellInfo* GetSpellInfoOverride(const SpellInfo* spellInfo) { return spellInfo; }
     virtual uint32 GetSpellPrice(Player* player, uint32 spellId);
-    virtual uint32 GetSpellCount(uint32 spellId) { return 1; };
+    virtual uint32 GetSpellCount(uint32) { return 1; };
     virtual uint32 GetReagents(const SpellInfo* spellInfo, Reagents& reagents);
     virtual uint32 AddReagents(Reagents& reagents, uint32 itemId, uint32 count);
     virtual const std::vector<CraftsmanCommonRecipe>& GetDefaultRecipe() const = 0;

@@ -180,7 +180,7 @@ bool CraftsmanBaseAI::OnGossipSelect(Player* player, uint32 menuId, uint32 gossi
     return true;
 }
 
-bool CraftsmanBaseAI::OnGossipSelectCode(Player* player, uint32 menuId, uint32 gossipListId, char const* code)
+bool CraftsmanBaseAI::OnGossipSelectCode(Player* player, uint32, uint32 gossipListId, char const* code)
 {
     uint32 const sender = player->PlayerTalkClass->GetGossipOptionSender(gossipListId);
     uint32 const action = player->PlayerTalkClass->GetGossipOptionAction(gossipListId);
@@ -195,7 +195,7 @@ bool CraftsmanBaseAI::OnGossipSelectCode(Player* player, uint32 menuId, uint32 g
     return true;
 }
 
-void CraftsmanBaseAI::SpellHitTarget(WorldObject* wtarget, SpellInfo const* spell)
+void CraftsmanBaseAI::SpellHitTarget(WorldObject*, SpellInfo const*)
 {
     // Get and clear order information
     Player* player = this->customer;
@@ -240,7 +240,7 @@ void CraftsmanBaseAI::SpellHitTarget(WorldObject* wtarget, SpellInfo const* spel
     TakeReagentsFromPlayer(player, reagents, count);
 
     // Take money
-    player->ModifyMoney(-cost);
+    player->ModifyMoney(-static_cast<int32>(cost));
 
     // Create new items for customer.
     Item* pItem = player->StoreNewItem(dest, artifactId, true, 0);
@@ -264,7 +264,7 @@ void CraftsmanBaseAI::SendRecipeGossipMenuFor(Player* player, std::string keywor
 
     std::string searchText = sCraftsmanTextMgr->GetText(locale, CMTEXT_INPUT_KEYWORD);
     if (!keyword.empty())
-        searchText = fmt::format(sCraftsmanTextMgr->GetText(locale, CMTEXT_CURRENT_KEYWORD), keyword);
+        searchText = fmt::format(fmt::runtime(sCraftsmanTextMgr->GetText(locale, CMTEXT_CURRENT_KEYWORD)), keyword);
 
     AddGossipItemFor(player, GOSSIP_ICON_INTERACT_1, searchText, GOSSIP_SENDER_CRAFTSMAN_RECIPES, GOSSIP_ACTION_OEM_SERVICE, "", 0, true);
 
@@ -543,7 +543,7 @@ void CraftsmanBaseAI::WhisperNeedReagentFor(Player* player, uint32 artifactId, c
     }
     std::string reagentsText = oss.str();
 
-    std::string message = fmt::format(needReagentsText, artifactText, reagentsText);
+    std::string message = fmt::format(fmt::runtime(needReagentsText), artifactText, reagentsText);
     me->Whisper(message, LANG_UNIVERSAL, player);
 }
 
@@ -555,7 +555,7 @@ void CraftsmanBaseAI::WhisperNotEnoughSlotFor(Player* player)
 void CraftsmanBaseAI::WhisperStartWorkingFor(Player* player, uint32 artifactId)
 {
     const std::string& workingText = sCraftsmanTextMgr->GetText(player, CMTEXT_START_WORKING);
-    std::string message = fmt::format(workingText, GetItemLink(player, artifactId));
+    std::string message = fmt::format(fmt::runtime(workingText), GetItemLink(player, artifactId));
     me->Whisper(message, LANG_UNIVERSAL, player);
 }
 
@@ -575,12 +575,10 @@ void CraftsmanBaseAI::PrepareDefaultRecipeMenuItems(Player* player)
     }
 }
 
-uint CraftsmanBaseAI::PrepareRecipeMenuItems(Player* player, std::string keyword)
+uint32 CraftsmanBaseAI::PrepareRecipeMenuItems(Player* player, std::string keyword)
 {
     if (keyword.empty())
         return 0;
-
-    LocaleConstant locale = player->GetSession()->GetSessionDbcLocale();
 
     int matched = 0;
 
@@ -643,7 +641,7 @@ uint32 CraftsmanBaseAI::GetSpellPrice(Player* player, uint32 spellId)
 
 uint32 CraftsmanBaseAI::GetReagents(const SpellInfo* spellInfo, Reagents& reagents)
 {
-    uint money = 0;
+    uint32 money = 0;
     for (uint32 i = 0; i < MAX_SPELL_REAGENTS; ++i)
     {
         if (spellInfo->Reagent[i] <= 0)

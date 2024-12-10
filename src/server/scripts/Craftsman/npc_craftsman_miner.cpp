@@ -116,7 +116,7 @@ public:
             return CraftsmanBaseAI::GetSpellPrice(player, spellId) / 100;
         }
 
-        uint32 GetSpellCount(uint32 spellId) override
+        uint32 GetSpellCount(uint32) override
         {
             return 10;
         }
