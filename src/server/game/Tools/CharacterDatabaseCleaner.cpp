@@ -16,7 +16,6 @@
  */
 
 #include "Common.h"
-#include "AchievementMgr.h"
 #include "CharacterDatabaseCleaner.h"
 #include "DatabaseEnv.h"
 #include "DBCStores.h"
@@ -108,7 +107,7 @@ void CharacterDatabaseCleaner::CheckUnique(char const* column, char const* table
 
 bool CharacterDatabaseCleaner::AchievementProgressCheck(uint32 criteria)
 {
-    return sAchievementMgr->GetAchievementCriteria(criteria) != nullptr;
+    return sAchievementCriteriaStore.LookupEntry(criteria) != nullptr;
 }
 
 void CharacterDatabaseCleaner::CleanCharacterAchievementProgress()
@@ -147,7 +146,7 @@ bool CharacterDatabaseCleaner::TalentCheck(uint32 talent_id)
 
 void CharacterDatabaseCleaner::CleanCharacterTalent()
 {
-    CharacterDatabase.DirectPExecute("DELETE FROM character_talent WHERE talentGroup > {}", MAX_TALENT_SPECS);
+    CharacterDatabase.DirectPExecute("DELETE FROM character_talent WHERE talentGroup > {}", MAX_TALENT_GROUPS);
     CheckUnique("spell", "character_talent", &TalentCheck);
 }
 

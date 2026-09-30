@@ -1,5 +1,6 @@
 #include "bot_ai.h"
 #include "bpet_ai.h"
+#include "Creature.h"
 #include "ScriptMgr.h"
 /*
 Deathknight NpcBot Pets (by Trickerer onlysuffering@gmail.com)
@@ -102,7 +103,7 @@ public:
 
                 if (IsSpellReady(LEAP_1, diff) && energy >= 10 &&
                     !HasBotCommandState(BOT_COMMAND_STAY) &&
-                    !(opponent->GetTypeId() == TYPEID_UNIT && opponent->ToCreature()->isWorldBoss()) &&
+                    !(opponent->IsCreature() && opponent->ToCreature()->isWorldBoss()) &&
                     dist > 5 && dist < 30)
                 {
                     me->CastSpell(opponent, GetSpell(LEAP_1), false);

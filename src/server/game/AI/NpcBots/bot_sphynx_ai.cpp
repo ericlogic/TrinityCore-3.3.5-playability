@@ -48,18 +48,9 @@ enum SphynxSpecial
     SPLASH_ATTACK_COST      = BASE_MANA_SPHYNX/16//6.25%
 };
 
-static const uint32 Sphynx_spells_damage_arr[] =
-{ /*MAIN_ATTACK_1, */SPLASH_ATTACK_1 };
-
-static const uint32 Sphynx_spells_heal_arr[] =
-{ REPLENISH_HEALTH_1 };
-
-static const uint32 Sphynx_spells_support_arr[] =
-{ DEVOUR_MAGIC_1, /*DRAIN_MANA_1, */REPLENISH_HEALTH_1, REPLENISH_MANA_1 };
-
-static const std::vector<uint32> Sphynx_spells_damage(FROM_ARRAY(Sphynx_spells_damage_arr));
-static const std::vector<uint32> Sphynx_spells_heal(FROM_ARRAY(Sphynx_spells_heal_arr));
-static const std::vector<uint32> Sphynx_spells_support(FROM_ARRAY(Sphynx_spells_support_arr));
+static const std::vector<uint32> Sphynx_spells_damage{ /*MAIN_ATTACK_1, */SPLASH_ATTACK_1 };
+static const std::vector<uint32> Sphynx_spells_heal{ REPLENISH_HEALTH_1 };
+static const std::vector<uint32> Sphynx_spells_support{ DEVOUR_MAGIC_1, /*DRAIN_MANA_1, */REPLENISH_HEALTH_1, REPLENISH_MANA_1 };
 
 class sphynx_bot : public CreatureScript
 {
@@ -245,7 +236,7 @@ public:
 
             std::list<Unit*> targets;
             GetNearbyFriendlyTargetsList(targets, 40);
-            targets.remove_if(BOTAI_PRED::DrainTargetExclude());
+            std::erase_if(targets, BOTAI_PRED::DrainTargetExclude());
 
             if (targets.empty())
                 return;
@@ -375,9 +366,9 @@ public:
                 me->CastSpell(me, MH_OH_ATTACK_ANIM, true);
 
             if (baseId == REPLENISH_MANA_1)
-                me->SendPlaySpellVisual(425); //arcane cast omni
+                me->SendPlaySpellVisualKit(425, 1); //arcane cast omni
             if (baseId == REPLENISH_HEALTH_1)
-                me->SendPlaySpellVisual(21); //empty cast finish anim
+                me->SendPlaySpellVisualKit(21, 1); //empty cast finish anim
 
             if (baseId == REPLENISH_MANA_1 || baseId == REPLENISH_HEALTH_1)
                 me->SetPower(POWER_MANA, 0);
@@ -408,11 +399,11 @@ public:
             if (spellId == DRAIN_MANA_1)
             {
                 me->CastSpell(target, SPELL_DEVOUR_MAGIC_BEAM, true);
-                target->SendPlaySpellVisual(419); //drain impact visual
+                target->SendPlaySpellVisualKit(419, 1); //drain impact visual
             }
             if (spellId == REPLENISH_MANA_1)
                 if (target != me)
-                    target->SendPlaySpellVisual(524/*436*/); //mana gain visual//heal bigger crimson ish
+                    target->SendPlaySpellVisualKit(524/*436*/, 1); //mana gain visual//heal bigger crimson ish
 
             OnSpellHitTarget(target, spell);
         }
@@ -432,7 +423,7 @@ public:
             if (me != dispelled)
             {
                 me->CastSpell(dispelled, SPELL_DEVOUR_MAGIC_BEAM, true);
-                dispelled->SendPlaySpellVisual(357/*317*/); //purge visual
+                dispelled->SendPlaySpellVisualKit(357/*317*/, 1); //purge visual
             }
 
             dispelsDealt += num;

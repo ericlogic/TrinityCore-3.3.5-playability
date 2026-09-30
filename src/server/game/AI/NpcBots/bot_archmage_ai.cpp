@@ -39,14 +39,8 @@ enum ArchmageSpecial
     ARCHMAGE_MOUNTID        = 2402
 };
 
-static const uint32 Archmage_spells_damage_arr[] =
-{ MAIN_ATTACK_1, BLIZZARD_1 };
-
-static const uint32 Archmage_spells_support_arr[] =
-{ SUMMON_WATER_ELEMENTAL_1 };
-
-static const std::vector<uint32> Archmage_spells_damage(FROM_ARRAY(Archmage_spells_damage_arr));
-static const std::vector<uint32> Archmage_spells_support(FROM_ARRAY(Archmage_spells_support_arr));
+static const std::vector<uint32> Archmage_spells_damage{ MAIN_ATTACK_1, BLIZZARD_1 };
+static const std::vector<uint32> Archmage_spells_support{ SUMMON_WATER_ELEMENTAL_1 };
 
 class archmage_bot : public CreatureScript
 {
@@ -207,7 +201,7 @@ public:
                 pctbonus *= 1.333f;
 
             if (baseId == MAIN_ATTACK_1 || baseId == BLIZZARD_1)
-                fdamage += me->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_MAGIC) * (spellInfo->_effects[0].BonusMultiplier - 1.f) * me->CalculateDefaultCoefficient(spellInfo, SPELL_DIRECT_DAMAGE) * me->CalculateSpellpowerCoefficientLevelPenalty(spellInfo);
+                fdamage += me->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_MAGIC) * (spellInfo->_effects[0].BonusCoefficient - 1.f) * me->CalculateDefaultCoefficient(spellInfo, SPELL_DIRECT_DAMAGE) * me->CalculateSpellpowerCoefficientLevelPenalty(spellInfo);
 
             damage = int32(fdamage * pctbonus);
         }

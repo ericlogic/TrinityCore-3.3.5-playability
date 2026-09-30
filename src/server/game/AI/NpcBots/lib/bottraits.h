@@ -7,7 +7,9 @@
 #include "Log.h"
 #include "SpellAuraEffects.h"
 
+#include <algorithm>
 #include <array>
+#include <ranges>
 #include <tuple>
 
 namespace NPCBots
@@ -94,9 +96,9 @@ CanAffectVictimSchools(Unit const* target, Schools... schools)
         {
             for (uint8 i = SPELL_SCHOOL_NORMAL; i < MAX_SPELL_SCHOOL; ++i)
             {
-                if (immune_mask & (1 << i))
+                if (immune_mask & (1u << i))
                 {
-                    arr_iter_type ri = std::find(results.begin(), results.end(), std::pair{ SpellSchools(i), true });
+                    arr_iter_type ri = std::ranges::find(results, std::pair{ SpellSchools(i), true });
                     if (ri != results.end())
                         ri->second = false;
                 }
@@ -110,9 +112,9 @@ CanAffectVictimSchools(Unit const* target, Schools... schools)
         {
             for (uint8 i = SPELL_SCHOOL_NORMAL; i < MAX_SPELL_SCHOOL; ++i)
             {
-                if (immune_mask & (1 << i))
+                if (immune_mask & (1u << i))
                 {
-                    arr_iter_type ri = std::find(results.begin(), results.end(), std::pair{ SpellSchools(i), true });
+                    arr_iter_type ri = std::ranges::find(results, std::pair{ SpellSchools(i), true });
                     if (ri != results.end())
                         ri->second = false;
                 }
@@ -138,7 +140,7 @@ CanAffectVictimAny(Unit const* target, Schools... schools)
 
     arr_type bools = CanAffectVictimSchools(target, schools...);
 
-    return std::any_of(bools.cbegin(), bools.cend(), [](pair_type const& p) { return p.second; });
+    return std::ranges::any_of(bools, [](pair_type const& p) { return p.second; });
 }
 
 template<class...Schools>
@@ -150,7 +152,7 @@ CanAffectVictimAll(Unit const* target, Schools... schools)
 
     arr_type bools = CanAffectVictimSchools(target, schools...);
 
-    return std::all_of(bools.cbegin(), bools.cend(), [](pair_type const& p) { return p.second; });
+    return std::ranges::all_of(bools, [](pair_type const& p) { return p.second; });
 }
 
 #endif

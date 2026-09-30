@@ -43,7 +43,7 @@ m_timer(0), m_lifetime(0), m_canFollowOwner(true)
 
 WorldObject* TempSummon::GetSummoner() const
 {
-    return m_summonerGUID ? ObjectAccessor::GetWorldObject(*this, m_summonerGUID) : nullptr;
+    return !m_summonerGUID.IsEmpty() ? ObjectAccessor::GetWorldObject(*this, m_summonerGUID) : nullptr;
 }
 
 Unit* TempSummon::GetSummonerUnit() const
@@ -55,7 +55,7 @@ Unit* TempSummon::GetSummonerUnit() const
 
 Creature* TempSummon::GetSummonerCreatureBase() const
 {
-    return m_summonerGUID ? ObjectAccessor::GetCreature(*this, m_summonerGUID) : nullptr;
+    return !m_summonerGUID.IsEmpty() ? ObjectAccessor::GetCreature(*this, m_summonerGUID) : nullptr;
 }
 
 GameObject* TempSummon::GetSummonerGameObject() const
@@ -204,14 +204,15 @@ void TempSummon::InitStats(uint32 duration)
     //npcbot: skip deleting/reassigning player totems
     //normally no creatorGUID is assigned at this point, perform full check anyway for compatibilty reasons
     if (!(m_Properties->Slot && m_Properties->Slot >= SUMMON_SLOT_TOTEM_FIRE && m_Properties->Slot < MAX_TOTEM_SLOT &&
-        GetCreatorGUID() && GetCreatorGUID().IsCreature() && owner && owner->GetTypeId() == TYPEID_PLAYER &&
+        !GetCreatorGUID().IsEmpty() && GetCreatorGUID().IsCreature() && owner && owner->GetTypeId() == TYPEID_PLAYER &&
         owner->ToPlayer()->HaveBot() && owner->ToPlayer()->GetBotMgr()->GetBot(GetCreatorGUID())))
     //end npcbot
     if (owner)
     {
-        if (uint32 slot = m_Properties->Slot)
+        std::ptrdiff_t slot = m_Properties->Slot;
+        if (slot != 0)
         {
-            if (owner->m_SummonSlot[slot] && owner->m_SummonSlot[slot] != GetGUID())
+            if (!owner->m_SummonSlot[slot].IsEmpty() && owner->m_SummonSlot[slot] != GetGUID())
             {
                 Creature* oldSummon = GetMap()->GetCreature(owner->m_SummonSlot[slot]);
                 if (oldSummon && oldSummon->IsSummon())
@@ -244,6 +245,14 @@ void TempSummon::InitSummon()
         }
         if (IsAIEnabled())
             AI()->IsSummonedBy(owner);
+
+        //npcbot
+        if (IsTempBot())
+        {
+            m_summonerGUID = ObjectGuid::Empty;
+            SetCreatorGUID(m_summonerGUID);
+        }
+        //end npcbot
     }
 }
 
@@ -306,10 +315,10 @@ void TempSummon::RemoveFromWorld()
         return;
 
     if (m_Properties)
-        if (uint32 slot = m_Properties->Slot)
-            if (Unit* owner = GetSummonerUnit())
-                if (owner->m_SummonSlot[slot] == GetGUID())
-                    owner->m_SummonSlot[slot].Clear();
+        if (Unit* owner = GetSummonerUnit())
+            for (ObjectGuid& summonSlot : owner->m_SummonSlot)
+                if (summonSlot == GetGUID())
+                    summonSlot.Clear();
 
     //if (GetOwnerGUID())
     //    TC_LOG_ERROR("entities.unit", "Unit {} has owner guid when removed from world", GetEntry());
@@ -345,7 +354,7 @@ void Minion::InitStats(uint32 duration)
     //do not add bot totem to player's controlled list
     //client indicator will be OwnerGUID
     if (m_Properties && m_Properties->Slot && m_Properties->Slot >= SUMMON_SLOT_TOTEM_FIRE && m_Properties->Slot < MAX_TOTEM_SLOT &&
-        GetCreatorGUID() && GetCreatorGUID().IsCreature() && GetOwner() && GetOwner()->GetTypeId() == TYPEID_PLAYER &&
+        !GetCreatorGUID().IsEmpty() && GetCreatorGUID().IsCreature() && GetOwner() && GetOwner()->GetTypeId() == TYPEID_PLAYER &&
         GetOwner()->ToPlayer()->HaveBot() && GetOwner()->ToPlayer()->GetBotMgr()->GetBot(GetCreatorGUID()))
         return;
     //end npcbot

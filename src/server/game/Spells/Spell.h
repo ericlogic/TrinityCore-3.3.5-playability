@@ -76,7 +76,7 @@ enum SpellCastFlags
 {
     CAST_FLAG_NONE               = 0x00000000,
     CAST_FLAG_PENDING            = 0x00000001,              // aoe combat log?
-    CAST_FLAG_UNKNOWN_2          = 0x00000002,
+    CAST_FLAG_HAS_TRAJECTORY     = 0x00000002,
     CAST_FLAG_UNKNOWN_3          = 0x00000004,
     CAST_FLAG_UNKNOWN_4          = 0x00000008,              // ignore AOE visual
     CAST_FLAG_UNKNOWN_5          = 0x00000010,
@@ -338,6 +338,7 @@ class TC_GAME_API Spell
         SpellCastResult CheckPower() const;
         SpellCastResult CheckRuneCost(uint32 runeCostID) const;
         SpellCastResult CheckCasterAuras(uint32* param1) const;
+        SpellCastResult CheckArenaCastRules() const;
         SpellCastResult CheckMovement() const;
 
         bool CheckSpellCancelsAuraEffect(AuraType auraType, uint32* param1) const;
@@ -360,11 +361,12 @@ class TC_GAME_API Spell
         void UpdateSpellCastDataAmmo(WorldPackets::Spells::SpellAmmo& data);
 
         bool CheckEffectTarget(Unit const* target, SpellEffectInfo const& spellEffectInfo, Position const* losPosition) const;
+        bool CheckEffectTarget(GameObject const* target, SpellEffectInfo const& spellEffectInfo) const;
+        bool CheckEffectTarget(Item const* target, SpellEffectInfo const& spellEffectInfo) const;
         bool CanAutoCast(Unit* target);
         void CheckSrc();
         void CheckDst();
 
-        static void WriteCastResultInfo(WorldPacket& data, Player* caster, SpellInfo const* spellInfo, uint8 castCount, SpellCastResult result, SpellCustomErrors customError, uint32* param1 = nullptr, uint32* param2 = nullptr);
         static void SendCastResult(Player* caster, SpellInfo const* spellInfo, uint8 castCount, SpellCastResult result, SpellCustomErrors customError = SPELL_CUSTOM_ERROR_NONE, uint32* param1 = nullptr, uint32* param2 = nullptr);
         void SendCastResult(SpellCastResult result, uint32* param1 = nullptr, uint32* param2 = nullptr) const;
         void SendPetCastResult(SpellCastResult result);
@@ -467,6 +469,10 @@ class TC_GAME_API Spell
         Trinity::unique_weak_ptr<Spell> GetWeakPtr() const;
 
         void CallScriptOnResistAbsorbCalculateHandlers(DamageInfo const& damageInfo, uint32& resistAmount, int32& absorbAmount);
+
+        int64 GetUnitTargetCountForEffect(SpellEffIndex effect) const;
+        int64 GetGameObjectTargetCountForEffect(SpellEffIndex effect) const;
+        int64 GetItemTargetCountForEffect(SpellEffIndex effect) const;
 
     protected:
         bool HasGlobalCooldown() const;

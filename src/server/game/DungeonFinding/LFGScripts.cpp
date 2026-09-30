@@ -31,6 +31,13 @@
 #include "SharedDefines.h"
 #include "WorldSession.h"
 
+//npcbot
+#include "botconfig.h"
+#include "botdatamgr.h"
+#include "botmgr.h"
+#include "Creature.h"
+//end npcbot
+
 namespace lfg
 {
 
@@ -78,7 +85,7 @@ void LFGPlayerScript::OnMapChanged(Player* player)
 {
     Map const* map = player->GetMap();
 
-    if (sLFGMgr->inLfgDungeonMap(player->GetGUID(), map->GetId(), map->GetDifficulty()))
+    if (sLFGMgr->inLfgDungeonMap(player->GetGUID(), map->GetId(), map->GetDifficultyID()))
     {
         Group* group = player->GetGroup();
         // This function is also called when players log in
@@ -105,6 +112,12 @@ void LFGPlayerScript::OnMapChanged(Player* player)
                 player->GetSession()->SendNameQueryOpcode(member->GetGUID());
         //end npcbot
 
+        //npcbot
+        if (group->GetLeaderGUID() == player->GetGUID() && group->GetMembersCount() < MAX_GROUP_SIZE &&
+            BotCfg::IsNpcBotModEnabled() && BotCfg::IsNpcBotDungeonFinderBotGenerationEnabled())
+            BotDataMgr::GenerateDungeonBots(player, group, map);
+        //end npcbot
+
         if (sLFGMgr->selectedRandomLfgDungeon(player->GetGUID()))
             player->CastSpell(player, LFG_SPELL_LUCK_OF_THE_DRAW, true);
     }
@@ -121,6 +134,13 @@ void LFGPlayerScript::OnMapChanged(Player* player)
             TC_LOG_DEBUG("lfg", "LFGPlayerScript::OnMapChanged, Player {}({}) is last in the lfggroup so we disband the group.",
                 player->GetName(), player->GetGUID().ToString());
         }
+
+        //npcbot
+        if (group && group->isLFGGroup())
+            if (sLFGMgr->GetState(group->GetGUID()) >= LFG_STATE_FINISHED_DUNGEON)
+                player->GetBotMgr()->RemoveAllSummonedBots();
+        //end npcbot
+
         player->RemoveAurasDueToSpell(LFG_SPELL_LUCK_OF_THE_DRAW);
     }
 }
@@ -250,7 +270,7 @@ void LFGGroupScript::OnInviteMember(Group* group, ObjectGuid guid)
     // No gguid ==  new group being formed
     // No leader == after group creation first invite is new leader
     // leader and no gguid == first invite after leader is added to new group (this is the real invite)
-    if (leader && !gguid)
+    if (!leader.IsEmpty() && gguid.IsEmpty())
         sLFGMgr->LeaveLfg(leader);
 }
 

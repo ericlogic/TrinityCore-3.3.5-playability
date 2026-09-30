@@ -1,6 +1,6 @@
-################################################
-# Trinity Core World Server configuration file #
-################################################
+###############################################
+# TrinityCore World Server configuration file #
+###############################################
 [worldserver]
 
 ###################################################################################################
@@ -79,7 +79,7 @@ DataDir = "."
 #    LogsDir
 #        Description: Logs directory setting.
 #        Important:   LogsDir needs to be quoted, as the string might contain space characters.
-#                     Logs directory must exists, or log file creation will be disabled.
+#                     Logs directory must exist, or log file creation will be disabled.
 #        Default:     "" - (Log files will be stored in the current path)
 
 LogsDir = ""
@@ -115,7 +115,7 @@ CharacterDatabaseInfo = "127.0.0.1;3306;trinity;trinity;characters"
 #    LoginDatabase.WorkerThreads
 #    WorldDatabase.WorkerThreads
 #    CharacterDatabase.WorkerThreads
-#        Description: The amount of worker threads spawned to handle asynchronous (delayed) MySQL
+#        Description: The number of worker threads spawned to handle asynchronous (delayed) MySQL
 #                     statements. Each worker thread is mirrored with its own connection to the
 #                     MySQL server and their own thread on the MySQL server.
 #        Default:     1 - (LoginDatabase.WorkerThreads)
@@ -130,7 +130,7 @@ CharacterDatabase.WorkerThreads = 1
 #    LoginDatabase.SynchThreads
 #    WorldDatabase.SynchThreads
 #    CharacterDatabase.SynchThreads
-#        Description: The amount of MySQL connections spawned to handle.
+#        Description: The number of MySQL connections spawned to handle.
 #        Default:     1 - (LoginDatabase.SynchThreads)
 #                     1 - (WorldDatabase.SynchThreads)
 #                     2 - (CharacterDatabase.SynchThreads)
@@ -177,7 +177,7 @@ ThreadPool = 2
 #    CMakeCommand
 #        Description: The path to your CMake binary.
 #                     If the path is left empty, the built-in CMAKE_COMMAND is used.
-#        Example:     "C:/Program Files (x86)/CMake/bin/cmake.exe"
+#        Example:     "C:/Program Files/CMake/bin/cmake.exe"
 #                     "/usr/bin/cmake"
 #        Default:     ""
 
@@ -205,7 +205,7 @@ SourceDirectory  = ""
 #    MySQLExecutable
 #        Description: The path to your MySQL CLI binary.
 #                     If the path is left empty, built-in path from cmake is used.
-#        Example:     "C:/Program Files/MySQL/MySQL Server 5.6/bin/mysql.exe"
+#        Example:     "C:/Program Files/MySQL/MySQL Server 8.0/bin/mysql.exe"
 #                     "mysql.exe"
 #                     "/usr/bin/mysql"
 #        Default:     ""
@@ -239,7 +239,7 @@ UseProcessors = 0
 #
 #    ProcessPriority
 #        Description: Process priority setting for Windows and Linux based systems.
-#        Details:     On Linux, a nice value of -15 is used. (requires superuser).
+#        Details:     On Linux, a nice value of -15 is used (requires superuser).
 #                     On Windows, process is set to HIGH class.
 #        Default:     0 - (Normal)
 #                     1 - (High)
@@ -593,6 +593,13 @@ GameType = 0
 RealmZone = 1
 
 #
+#    ExtendedAccountNameLengthLimit
+#        Description: Extends account name limit from 16 (retail-like) to 64 characters
+#        Default      0
+
+ExtendedAccountNameLengthLimit = 0
+
+#
 #    StrictPlayerNames
 #        Description: Limit player name to language specific symbol set. Prevents character
 #                     creation and forces rename request if not allowed symbols are used
@@ -716,6 +723,13 @@ ArenaTeam.CharterCost.5v5 = 2000000
 MaxWhoListReturns = 49
 
 #
+#    WhoList.Update.Interval
+#        Description: Interval in seconds for Who List to get updated
+#        Default:     5 (seconds)
+
+WhoList.Update.Interval = 5
+
+#
 #    CharacterCreating.Disabled
 #        Description: Disable character creation for players based on faction.
 #        Default:     0 - (Enabled, All factions are allowed)
@@ -728,7 +742,7 @@ CharacterCreating.Disabled = 0
 #
 #    CharacterCreating.Disabled.RaceMask
 #        Description: Mask of races which cannot be created by players.
-#        Example:     1536 - (1024 + 512, Blood Elf and Draenei races are disabled)
+#        Example:     1536 - (512 + 1024, Blood Elf and Draenei races are disabled)
 #        Default:     0    - (Enabled, All races are allowed)
 #                     1    - (Disabled, Human)
 #                     2    - (Disabled, Orc)
@@ -1133,7 +1147,7 @@ MaxRecruitAFriendBonusDistance = 100
 #
 #    MinQuestScaledXPRatio
 #        Description: Min ratio of experience that a quest can grant when player level scaling is factored.
-#        Example:     50 (No less than 50% experience granted from a lower leveled quests completion)
+#        Example:     50 (No less than 50% experience granted from a lower-level quests completion)
 #                     100 (Quests always grant full experience upon completion)
 #        Default:     0 - (Quests too low may grant no experience)
 
@@ -1141,9 +1155,9 @@ MinQuestScaledXPRatio = 0
 
 #
 #    MinCreatureScaledXPRatio
-#        Description: Min ratio of experience that a creature kill can grant when player level scaling is factored.  This
-#                     will also allow spell procs to trigger, such as Drain Soul, if > 0 and exp is grantable.
-#        Example:     50 (No less than 50% experience granted from a lower leveled creature kill)
+#        Description: Min ratio of experience that a creature kill can grant when player level scaling is factored.
+#                     This will also allow spell procs to trigger, such as Drain Soul, if > 0 and experience is grantable.
+#        Example:     50 (No less than 50% experience granted from a lower-level creature kill)
 #                     100 (Creature kills always grant full experience upon kill)
 #        Default:     0 - (Creatures too low may grant no experience)
 
@@ -1233,10 +1247,10 @@ FlashAtStart = 1
 #
 #    Motd
 #        Description: Message of the Day, displayed at login. Use '@' for a newline.
-#        Example:     "Welcome to John's Server!@This server is proud to be powered by Trinity Core."
-#        Default:     "Welcome to a Trinity Core server."
+#        Example:     "Welcome to John's Server!@This server is proud to be powered by TrinityCore."
+#        Default:     "Welcome to a TrinityCore server."
 
-Motd = "Welcome to a Trinity Core server."
+Motd = "Welcome to a TrinityCore server."
 
 #
 #    Server.LoginInfo
@@ -1292,7 +1306,7 @@ DBC.EnforceItemAttributes = 1
 
 #
 #   AccountInstancesPerHour
-#        Description: Controls the max amount of different instances player can enter within hour.
+#        Description: Controls the maximum number of individual instances player can enter per hour.
 #        Default:     5
 
 AccountInstancesPerHour = 5
@@ -1411,7 +1425,7 @@ Updates.AllowRehash = 1
 
 #
 #    Updates.CleanDeadRefMaxCount
-#        Description: Cleans dead/ orphaned references that occur if an update was removed or renamed and edited in one step.
+#        Description: Cleans dead/orphaned references that occur if an update was removed or renamed and edited in one step.
 #                     It only starts the clean up if the count of the missing updates is below or equal the Updates.CleanDeadRefMaxCount value.
 #                     This way prevents erasing of the update history due to wrong source directory state (maybe wrong branch or bad revision).
 #                     Disable this if you want to know if the database is in a possible "dirty state".
@@ -1598,12 +1612,12 @@ AllowTwoSide.Interaction.Guild = 0
 #    AllowTwoSide.Interaction.Auction
 #        Description: Allow auctions between factions.
 #                     This results in all auctions being handled as if placed in the neutral
-#                     auction house and will intentionally lock acces to the Horde and Alliance AH.
+#                     auction house and will intentionally lock access to the Horde and Alliance AH.
 #                     Deposit fee and auction cut values will be taken from neutral auction house.
 #                     If used in combination with the AH-Bot, settings should be set for neutral
 #                     auction house only.
 #
-#                     Warning: changing this in production results in players loosing access to their
+#                     Warning: changing this in production results in players losing access to their
 #                     already placed auctions in the faction houses - these auctions will expire after
 #                     their regular timings.
 #        Default:     0 - (Disabled)
@@ -2178,8 +2192,12 @@ GM.AllowInvite = 0
 
 #
 #    GM.LowerSecurity
-#        Description: Allow lower security levels to use commands on higher security level
-#                     characters.
+#        Description: Disallow lower security levels to use commands on higher security level
+#                     characters. Regardless of this value, lower security check is always
+#                     enabled for accounts without RBAC_PERM_CAN_IGNORE_LOWER_SECURITY_CHECK.
+#                     This option also does not affect "strong" checks, such as in
+#                     certain .account and .rbac commands, which are always enabled.
+#
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
@@ -3821,7 +3839,7 @@ AuctionHouseBot.Buyer.ChanceFactor = 2
 
 #
 #    AuctionHouseBot.Buyer.Baseprice.QUALITY
-#       Description: Base sell prices in copper for non priced items for each quality.
+#       Description: Base sell prices in copper for non-priced items for each quality.
 #                    The default values are based on average item prices of each quality.
 #       Defaults:    Gray   3504
 #                    White  5429
@@ -4209,6 +4227,38 @@ NpcBot.MaxBotsPerAccount = 0
 NpcBot.Botgiver.FilterRaces = 0
 
 #
+#    NpcBot.SharedOwnership.Options
+#        Description: Bitmask describing enabled shared ownership options.
+#        Note:        WARNING! SHARED BOT OWNERSHIP ENABLES EXPLOITS! USE ON YOUR OWN RISK!
+#        Note2:       Term 'share' below refers to a player whom ownership is being shared with
+#        Values:
+#                     0 - Disable completely (default)
+#                     1 - Enable (allows bot owner to share their bots)
+#                     2 - Shared equipment management (including soulbound items)
+#                     4 - Shared ownership extension (allow shares to share the bot further)
+#                     8 - Shared ownership removal (allows shares to remove other shares)
+#        Notes:
+#                     Initially only bot owner can add new shares
+#                     Shares cannot remove bot owner from shared owneship list (or add to it)
+#                     Shares cannot dismiss the bot. If bot ownership expires due to bot expiry
+#                       timer equipment is always returned to the original owner. If share's bot
+#                       ownership expires due to rent cost the bot becomes unbound instead.
+#                     Bots will accept any player from total ownership list as current master,
+#                       whoever is logged in currently and will not switch until they log out,
+#                       original owner takes priority but only if bot has no master currently.
+
+NpcBot.SharedOwnership.Options = 0
+
+#
+#    NpcBot.SharedOwnership.MaxOwners
+#        Description: Maximum number of players a bot can be shared with (NOT counting the owner)
+#        Note:        WARNING! SHARED BOT OWNERSHIP ENABLES EXPLOITS! USE ON YOUR OWN RISK!
+#        Default:     0
+#        Max:         39
+
+NpcBot.SharedOwnership.MaxOwners = 0
+
+#
 #    NpcBot.BaseFollowDistance
 #        Description: Default bot follow distance.
 #        Note:        This parameter determines bots' formation size, distance at which bots
@@ -4219,25 +4269,37 @@ NpcBot.Botgiver.FilterRaces = 0
 NpcBot.BaseFollowDistance = 30
 
 #
-#    NpcBot.XpReduction.Amount
-#    NpcBot.XpReduction.StartingNumber
-#    NpcBot.XpReduction.Blizzlike.Enable
-#    NpcBot.XpReduction.Blizzlike.GroupOnly
-#        Description: XP percent penalty for each bot used starting with <StartingNumber>.
-#                     <Blizzlike> enables group size based XP reduction counting either any bots
-#                     or bots in group only, combines multiplicatively
-#        Example:     Group of 4, 3 bots, reduction is 20, start is 2, blizzlike enabled:
-#                     (100 - ((3-(2-1))*20)) * 1.3 / 4 = 19.5% exp gained.
-#        Note:        Maximum overall xp reduction is 90%.
-#        Default:     0 - (NpcBot.XpReduction.Amount)
-#                     2 - (NpcBot.XpReduction.StartingNumber)
-#                     1 - (NpcBot.XpReduction.Blizzlike.Enable)
-#                     0 - (NpcBot.XpReduction.Blizzlike.GroupOnly)
+#    NpcBot.XpReduction.Enable
+#    NpcBot.XpReduction.GroupOnly
+#    NpcBot.XpReduction.Extra.Amount
+#    NpcBot.XpReduction.Extra.StartingNumber
+#        Description: Enable Blizzlike XP penalty for using bots counting
+#                     either all participating bots or in <GroupOnly>.
+#                     Additional XP reduction <Amount> applies on top of that,
+#                     starting with <StartingNumber>'th bot
+#        Example:     Group of 4, 3 bots, reduction is 20, start is 2:
+#                     (100% - ((3-(2-1))*20)) * 1.3 / 4 = 19.5% exp gained
+#        Note:        Maximum extra xp reduction factor is 90%.
+#        Default:     0 - (NpcBot.XpReduction.Enable)
+#                     0 - (NpcBot.XpReduction.GroupOnly)
+#                     0 - (NpcBot.XpReduction.Extra.Amount)
+#                     2 - (NpcBot.XpReduction.Extra.StartingNumber)
 
-NpcBot.XpReduction.Amount              = 0
-NpcBot.XpReduction.StartingNumber      = 2
-NpcBot.XpReduction.Blizzlike.Enable    = 1
-NpcBot.XpReduction.Blizzlike.GroupOnly = 0
+NpcBot.XpReduction.Enable               = 0
+NpcBot.XpReduction.GroupOnly            = 0
+NpcBot.XpReduction.Extra.Amount         = 0
+NpcBot.XpReduction.Extra.StartingNumber = 2
+
+#
+#    NpcBot.HonorReduction.Enable
+#    NpcBot.HonorReduction.GroupOnly
+#        Description: Enable Blizzlike honor gain reduction when using bots counting
+#                     either all participating bots or in <GroupOnly>.
+#        Default:     0 - (NpcBot.HonorReduction.Enable)
+#                     0 - (NpcBot.HonorReduction.GroupOnly)
+
+NpcBot.HonorReduction.Enable    = 0
+NpcBot.HonorReduction.GroupOnly = 0
 
 #
 #    NpcBot.MoneyShare.Enable
@@ -4574,7 +4636,7 @@ NpcBot.GearBank.EquipmentSets = 0
 #                     1 - (NpcBot.Classes.Mage.Enable)
 #                     1 - (NpcBot.Classes.Warlock.Enable)
 #                     1 - (NpcBot.Classes.Druid.Enable)
-#                     0 - (NpcBot.Classes.Blademaster.Enable)
+#                     1 - (NpcBot.Classes.Blademaster.Enable)
 #                     1 - (NpcBot.Classes.ObsidianDestroyer.Enable)
 #                     1 - (NpcBot.Classes.Archmage.Enable)
 #                     1 - (NpcBot.Classes.Dreadlord.Enable)
@@ -4594,7 +4656,7 @@ NpcBot.Classes.Shaman.Enable            = 1
 NpcBot.Classes.Mage.Enable              = 1
 NpcBot.Classes.Warlock.Enable           = 1
 NpcBot.Classes.Druid.Enable             = 1
-NpcBot.Classes.Blademaster.Enable       = 0
+NpcBot.Classes.Blademaster.Enable       = 1
 NpcBot.Classes.ObsidianDestroyer.Enable = 1
 NpcBot.Classes.Archmage.Enable          = 1
 NpcBot.Classes.Dreadlord.Enable         = 1
@@ -4664,6 +4726,25 @@ NpcBot.OwnershipExpireMode = 0
 NpcBot.EnrageOnDismiss = 1
 
 #
+#    NpcBot.DungeonBots.Enable
+#        Description: Allow autogenerating bots for non-full LFG groups entering non-raid dungeons
+#        Default:     0 - (NpcBot.DungeonBots.Enable)
+
+NpcBot.DungeonBots.Enable = 0
+
+#
+#    NpcBot.DungeonBots.MaxItemLevel.Ratio
+#        Description: Maximum item ilevel to generate for dungeon bots per level bracket compared
+#                     to dungeon max item level.
+#        Note:        If item generation attempt fails becuse of item ilevel restriction
+#                     the item will be generated again with this restriction ignored
+#        Example:     0,0,0,0,0,0,0,0,90 makes dungeon bots for Halls of Reflection only generate
+#                     items of ilevel 198N/209H or less instead of default max 219/232
+#        Default:     0,0,0,0,0,0,0,0,0
+
+NpcBot.DungeonBots.MaxItemLevel.Ratio = 0,0,0,0,0,0,0,0,0
+
+#
 #    NpcBot.WanderingBots.Continents.Count
 #        Description: Desired number of free wandering bots to generate. Wandering bots roam
 #                     around the map looking for trouble. Names and visuals are cloned from
@@ -4720,6 +4801,14 @@ NpcBot.WanderingBots.Continents.XPGain = 1.0
 NpcBot.WanderingBots.KillReward.Money       = 0
 NpcBot.WanderingBots.KillReward.ItemCount   = 0
 NpcBot.WanderingBots.KillReward.ItemQuality = 0
+
+#
+#    NpcBot.WanderingBots.FreeLoot.Skinning
+#        Description: Let wandering bot kills benefit surrounding players.
+#                     Skinning - preserve skinnable flag
+#        Default:     0 - (NpcBot.WanderingBots.FreeLoot.Skinning)
+
+NpcBot.WanderingBots.FreeLoot.Skinning = 0
 
 #
 #    NpcBot.WanderingBots.MaxItemLevel.Levels
@@ -4791,7 +4880,7 @@ NpcBot.WanderingBots.BG.TargetTeamPlayersCount.IC = 0
 #                     1 - (NpcBot.Classes.Mage.Enable)
 #                     1 - (NpcBot.Classes.Warlock.Enable)
 #                     1 - (NpcBot.Classes.Druid.Enable)
-#                     0 - (NpcBot.Classes.Blademaster.Enable)
+#                     1 - (NpcBot.Classes.Blademaster.Enable)
 #                     1 - (NpcBot.Classes.ObsidianDestroyer.Enable)
 #                     1 - (NpcBot.Classes.Archmage.Enable)
 #                     1 - (NpcBot.Classes.Dreadlord.Enable)
@@ -4811,7 +4900,7 @@ NpcBot.WanderingBots.Classes.Shaman.Enable            = 1
 NpcBot.WanderingBots.Classes.Mage.Enable              = 1
 NpcBot.WanderingBots.Classes.Warlock.Enable           = 1
 NpcBot.WanderingBots.Classes.Druid.Enable             = 1
-NpcBot.WanderingBots.Classes.Blademaster.Enable       = 0
+NpcBot.WanderingBots.Classes.Blademaster.Enable       = 1
 NpcBot.WanderingBots.Classes.ObsidianDestroyer.Enable = 1
 NpcBot.WanderingBots.Classes.Archmage.Enable          = 1
 NpcBot.WanderingBots.Classes.Dreadlord.Enable         = 1

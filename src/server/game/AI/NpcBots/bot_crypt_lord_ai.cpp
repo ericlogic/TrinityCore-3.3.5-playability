@@ -1,5 +1,6 @@
 #include "bot_ai.h"
 #include "botdatamgr.h"
+#include "botlogtraits.h"
 #include "botspell.h"
 #include "bottext.h"
 #include "CellImpl.h"
@@ -50,7 +51,8 @@ enum CryptLordBaseSpells
 //54022
     IMPALE_1                = SPELL_IMPALE,
     CARRION_BEETLES_1       = SPELL_CARRION_BEETLES,
-    LOCUST_SWARM_1          = SPELL_LOCUST_SWARM
+    LOCUST_SWARM_1          = SPELL_LOCUST_SWARM,
+    TAUNT_1                 = SPELL_TAUNT_CRYPT_LORD
 };
 enum CryptLordPassives
 {
@@ -74,7 +76,7 @@ enum CryptLordSpecial
 
     MODEL_BLOODY_BONES      = 25538,
 
-    IMPALE_MIN_TARGETS      = 3,
+    IMPALE_MIN_TARGETS      = 2,
 
     LOCUST_SWARM_MIN_LEVEL  = 40,
 
@@ -83,18 +85,9 @@ enum CryptLordSpecial
     MAX_LOCUSTS_MAXLEVEL    = 40
 };
 
-static const uint32 CryptLord_spells_damage_arr[] =
-{ IMPALE_1, LOCUST_SWARM_1 };
-
-static const uint32 CryptLord_spells_cc_arr[] =
-{ IMPALE_1, LOCUST_SWARM_1 };
-
-static const uint32 CryptLord_spells_support_arr[] =
-{ CARRION_BEETLES_1 };
-
-static const std::vector<uint32> CryptLord_spells_damage(FROM_ARRAY(CryptLord_spells_damage_arr));
-static const std::vector<uint32> CryptLord_spells_cc(FROM_ARRAY(CryptLord_spells_cc_arr));
-static const std::vector<uint32> CryptLord_spells_support(FROM_ARRAY(CryptLord_spells_support_arr));
+static const std::vector<uint32> CryptLord_spells_damage{ IMPALE_1, LOCUST_SWARM_1 };
+static const std::vector<uint32> CryptLord_spells_cc{ IMPALE_1, LOCUST_SWARM_1 };
+static const std::vector<uint32> CryptLord_spells_support{ CARRION_BEETLES_1, TAUNT_1 };
 
 class crypt_lord_bot : public CreatureScript
 {
@@ -147,8 +140,6 @@ public:
             me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_HORROR, true);
             me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_TURN, true);
             me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_SLEEP, true);
-
-            _locusts.resize(MAX_LOCUSTS_MAXLEVEL, ObjectGuid::Empty);
         }
 
         bool doCast(Unit* victim, uint32 spellId)
@@ -294,11 +285,30 @@ public:
 
             StartAttack(mytar, IsMelee());
 
+            float dist = me->GetDistance(mytar);
+            Unit const* u = mytar->GetVictim();
+
+            //TAUNT //No GCD
+            if (IsSpellReady(TAUNT_1, diff, false) && CanTauntTarget(mytar, dist) &&
+                ((!BotDataMgr::IsTankingClass(u->GetClass()) && GetHealthPCT(u) < 80) || IsTank()) && IsInBotParty(u))
+            {
+                if (doCast(mytar, GetSpell(TAUNT_1)))
+                    return;
+            }
+            //TAUNT 2 (distant)
+            if (IsSpellReady(TAUNT_1, diff, false) && CanTauntDistantTarget(mytar))
+            {
+                if (Unit* tUnit = FindDistantTauntTarget())
+                    if (doCast(tUnit, GetSpell(TAUNT_1)))
+                        return;
+            }
+
             MoveBehind(mytar);
 
             if (!HasRole(BOT_ROLE_DPS))
                 return;
 
+            //IMPALE
             if (IsSpellReady(IMPALE_1, diff) && _impaleCheckTimer <= diff && me->GetPower(POWER_MANA) >= IMPALE_COST &&
                 me->isAttackReady() && Rand() < 75)
             {
@@ -327,24 +337,24 @@ public:
                 GetNearbyTargetsList(impale_targets, IMPALE_DAMAGE_DIST_MAX, 0);
 
                 std::array<decltype(impale_targets), std::size(my_angles)> direction_targets{};
-                for (Unit* u : impale_targets)
+                for (Unit* iUnit : impale_targets)
                 {
-                    float angle = me->GetRelativeAngle(u);
-                    for (size_t i = 0; i < std::size(my_angles); ++i)
+                    float angle = me->GetRelativeAngle(iUnit);
+                    for (auto i : NPCBots::index_array<size_t, std::size(my_angles)>)
                     {
                         float rborder = Position::NormalizeOrientation(my_angles[i] - float(M_PI) * 0.25f);
                         float lborder = Position::NormalizeOrientation(my_angles[i] + float(M_PI) * 0.25f);
-                        if ((angle > rborder && angle < lborder) || u->IsWithinMeleeRange(me))
+                        if ((angle > rborder && angle < lborder) || iUnit->IsWithinMeleeRange(me))
                         {
-                            direction_targets[i].push_back(u);
+                            direction_targets[i].push_back(iUnit);
                             break;
                         }
                     }
                 }
 
                 std::add_pointer_t<std::add_const_t<decltype(impale_targets)>> chosen_targets = nullptr;
-                size_t max_count = IMPALE_MIN_TARGETS - 1;
-                for (decltype(direction_targets)::value_type const& tlist : direction_targets)
+                size_t max_count = IMPALE_MIN_TARGETS;
+                for (std::add_const_t<decltype(impale_targets)>& tlist : direction_targets)
                 {
                     if (tlist.size() > max_count)
                     {
@@ -515,8 +525,8 @@ public:
                     if (damage_returned)
                     {
                         WorldPacket data(SMSG_SPELLDAMAGESHIELD, 8 + 8 + 4 + 4 + 4 + 4 + 4);
-                        data << uint64(me->GetGUID());
-                        data << uint64(u->GetGUID());
+                        data << me->GetGUID();
+                        data << u->GetGUID();
                         data << uint32(damageSpellInfo->Id);
                         data << uint32(damage_returned);
                         data << uint32(std::max<int32>(int32(damage_returned) - int32(u->GetHealth()), 0));
@@ -560,12 +570,12 @@ public:
                 Unit* u = nullptr;
                 //try 1: by minimal level
                 uint8 minlevel = me->GetLevel();
-                for (Summons::const_iterator itr = _minions.begin(); itr != _minions.end(); ++itr)
+                for (Unit* s : _minions)
                 {
-                    if ((*itr)->GetLevel() < minlevel)
+                    if (s->GetLevel() < minlevel)
                     {
-                        minlevel = (*itr)->GetLevel();
-                        u = *itr;
+                        minlevel = s->GetLevel();
+                        u = s;
                     }
                 }
                 //try 2: last resort
@@ -657,14 +667,10 @@ public:
 
         void SummonedCreatureDespawn(Creature* summon) override
         {
-            if (_minions.find(summon) != _minions.end())
+            if (_minions.contains(summon))
                 _minions.erase(summon);
-            else
-            {
-                Swarm::iterator it = std::find(std::begin(_locusts), std::end(_locusts), summon->GetGUID());
-                if (it != std::end(_locusts))
-                    *it = ObjectGuid::Empty;
-            }
+            else if (auto it = std::ranges::find(_locusts, summon->GetGUID()); it != _locusts.end())
+                *it = ObjectGuid::Empty;
         }
 
         uint32 GetAIMiscValue(uint32 data) const override
@@ -707,6 +713,7 @@ public:
             InitSpellMap(IMPALE_1);
             InitSpellMap(CARRION_BEETLES_1);
             InitSpellMap(LOCUST_SWARM_1);
+            InitSpellMap(TAUNT_1);
         }
 
         void ApplyClassPassives() const override
@@ -812,12 +819,9 @@ public:
 
         bool _isUsableCorpse(Creature const* c) const
         {
-            static const uint32 ViableCreatureTypesMask =
-                (1 << (CREATURE_TYPE_BEAST-1)) | (1 << (CREATURE_TYPE_DRAGONKIN-1)) | (1 << (CREATURE_TYPE_HUMANOID-1));
-
             return c->getDeathState() == DeathState::CORPSE && c->GetDisplayId() == c->GetNativeDisplayId() &&
                 !c->IsVehicle() && !c->isWorldBoss() && !c->IsDungeonBoss() &&
-                ((1 << (c->GetCreatureType()-1)) & ViableCreatureTypesMask) &&
+                ((1u << (c->GetCreatureType()-1)) & USABLE_CORPSE_CREATURE_TYPE_MASK) &&
                 !c->IsControlledByPlayer() && !c->IsNPCBot();
         }
 
@@ -825,10 +829,10 @@ public:
         uint32 _carrionBeetlesCheckTimer;
         uint32 _locustSwarmCheckTimer;
 
-        typedef std::set<Creature*> Summons;
+        using Summons = std::set<Creature*>;
         Summons _minions;
-        typedef std::vector<ObjectGuid> Swarm;
-        Swarm _locusts;
+        using Swarm = std::array<ObjectGuid, MAX_LOCUSTS_MAXLEVEL>;
+        Swarm _locusts{};
     };
 };
 

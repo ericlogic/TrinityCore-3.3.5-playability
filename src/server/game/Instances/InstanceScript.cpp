@@ -651,7 +651,8 @@ void InstanceScript::DoRemoveAurasDueToSpellOnPlayer(Player* player, uint32 spel
 
     for (uint8 itr2 = 0; itr2 < MAX_SUMMON_SLOT; ++itr2)
     {
-        if (ObjectGuid summonGUID = player->m_SummonSlot[itr2])
+        ObjectGuid summonGUID = player->m_SummonSlot[itr2];
+        if (!summonGUID.IsEmpty())
             if (Creature* summon = instance->GetCreature(summonGUID))
                 summon->RemoveAurasDueToSpell(spell);
     }
@@ -695,9 +696,10 @@ void InstanceScript::DoCastSpellOnPlayer(Player* player, uint32 spell, bool incl
 
     for (uint8 itr2 = 0; itr2 < MAX_SUMMON_SLOT; ++itr2)
     {
-        if (ObjectGuid summonGUID = player->m_SummonSlot[itr2])
+        ObjectGuid summonGUID = player->m_SummonSlot[itr2];
+        if (!summonGUID.IsEmpty())
             if (Creature* summon = instance->GetCreature(summonGUID))
-                summon->CastSpell(player, spell, true);
+                summon->CastSpell(summon, spell, true);
     }
 
     if (!includeControlled)
@@ -707,7 +709,7 @@ void InstanceScript::DoCastSpellOnPlayer(Player* player, uint32 spell, bool incl
     {
         if (Unit* controlled = *itr2)
             if (controlled->IsInWorld() && controlled->GetTypeId() == TYPEID_UNIT)
-                controlled->CastSpell(player, spell, true);
+                controlled->CastSpell(controlled, spell, true);
     }
 }
 
@@ -776,7 +778,7 @@ void InstanceScript::SendEncounterUnit(EncounterFrameType type, Unit const* unit
 
 void InstanceScript::UpdateEncounterState(EncounterCreditType type, uint32 creditEntry, Unit* /*source*/)
 {
-    DungeonEncounterList const* encounters = sObjectMgr->GetDungeonEncounterList(instance->GetId(), instance->GetDifficulty());
+    DungeonEncounterList const* encounters = sObjectMgr->GetDungeonEncounterList(instance->GetId(), instance->GetDifficultyID());
     if (!encounters)
         return;
 

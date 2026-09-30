@@ -523,22 +523,6 @@ bool SpellMgr::CanSpellTriggerProcOnEvent(SpellProcEntry const& procEntry, ProcE
     if (eventInfo.GetTypeMask() & (PROC_FLAG_KILLED | PROC_FLAG_KILL | PROC_FLAG_DEATH))
         return true;
 
-    // do triggered cast checks
-    // Do not consider autoattacks as triggered spells
-    if (!(procEntry.AttributesMask & PROC_ATTR_TRIGGERED_CAN_PROC) && !(eventInfo.GetTypeMask() & AUTO_ATTACK_PROC_FLAG_MASK))
-    {
-        if (Spell const* spell = eventInfo.GetProcSpell())
-        {
-            if (spell->IsTriggered())
-            {
-                SpellInfo const* spellInfo = spell->GetSpellInfo();
-                if (!spellInfo->HasAttribute(SPELL_ATTR3_TRIGGERED_CAN_TRIGGER_PROC_2) &&
-                    !spellInfo->HasAttribute(SPELL_ATTR2_TRIGGERED_CAN_TRIGGER_PROC))
-                    return false;
-            }
-        }
-    }
-
     // check school mask (if set) for other trigger types
     if (procEntry.SchoolMask && !(eventInfo.GetSchoolMask() & procEntry.SchoolMask))
         return false;
@@ -1189,7 +1173,7 @@ void SpellMgr::LoadSpellTargetPositions()
 
     mSpellTargetPositions.clear();                                // need for reload case
 
-    //                                                0      1          2        3         4           5            6
+    //                                               0   1            2      3          4          5          6
     QueryResult result = WorldDatabase.Query("SELECT ID, EffectIndex, MapID, PositionX, PositionY, PositionZ, Orientation FROM spell_target_position");
     if (!result)
     {
@@ -1975,6 +1959,10 @@ void SpellMgr::LoadSkillLineAbilityMap()
         mSkillLineAbilityMap.insert(SkillLineAbilityMap::value_type(SkillInfo->Spell, SkillInfo));
         ++count;
     }
+
+    // Don't autolearn secondary variant of Seal of Righteousness - it is learned together with Judgement of Light
+    if (SkillLineAbilityEntry* sealOfRighteousnessR2 = const_cast<SkillLineAbilityEntry*>(sSkillLineAbilityStore.LookupEntry(11957)))
+        sealOfRighteousnessR2->AcquireMethod = 0;
 
     TC_LOG_INFO("server.loading", ">> Loaded {} SkillLineAbility MultiMap Data in {} ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
@@ -2991,7 +2979,7 @@ void SpellMgr::LoadSpellInfoCorrections()
             65755
         }, [](SpellInfo* spellInfo)
         {
-            spellInfo->_GetEffect(EFFECT_0).Amplitude = 1 * IN_MILLISECONDS;
+            spellInfo->_GetEffect(EFFECT_0).ApplyAuraPeriod = 1 * IN_MILLISECONDS;
         });
 
         ApplySpellFix({
@@ -3002,27 +2990,27 @@ void SpellMgr::LoadSpellInfoCorrections()
         }, [](SpellInfo* spellInfo)
         {
             // first effect has correct amplitude
-            spellInfo->_GetEffect(EFFECT_1).Amplitude = spellInfo->GetEffect(EFFECT_0).Amplitude;
+            spellInfo->_GetEffect(EFFECT_1).ApplyAuraPeriod = spellInfo->GetEffect(EFFECT_0).ApplyAuraPeriod;
         });
 
         // Vomit
         ApplySpellFix({ 43327 }, [](SpellInfo* spellInfo)
         {
-            spellInfo->_GetEffect(EFFECT_1).Amplitude = 1 * IN_MILLISECONDS;
+            spellInfo->_GetEffect(EFFECT_1).ApplyAuraPeriod = 1 * IN_MILLISECONDS;
         });
 
         // Strider Presence
         ApplySpellFix({ 4312 }, [](SpellInfo* spellInfo)
         {
-            spellInfo->_GetEffect(EFFECT_0).Amplitude = 1 * IN_MILLISECONDS;
-            spellInfo->_GetEffect(EFFECT_1).Amplitude = 1 * IN_MILLISECONDS;
+            spellInfo->_GetEffect(EFFECT_0).ApplyAuraPeriod = 1 * IN_MILLISECONDS;
+            spellInfo->_GetEffect(EFFECT_1).ApplyAuraPeriod = 1 * IN_MILLISECONDS;
         });
 
         // Food
         ApplySpellFix({ 64345 }, [](SpellInfo* spellInfo)
         {
-            spellInfo->_GetEffect(EFFECT_0).Amplitude = 1 * IN_MILLISECONDS;
-            spellInfo->_GetEffect(EFFECT_2).Amplitude = 1 * IN_MILLISECONDS;
+            spellInfo->_GetEffect(EFFECT_0).ApplyAuraPeriod = 1 * IN_MILLISECONDS;
+            spellInfo->_GetEffect(EFFECT_2).ApplyAuraPeriod = 1 * IN_MILLISECONDS;
         });
     }
 
@@ -3038,12 +3026,6 @@ void SpellMgr::LoadSpellInfoCorrections()
         ApplySpellFix({ 29917 }, [](SpellInfo* spellInfo)
         {
             spellInfo->_GetEffect(EFFECT_0).TriggerSpell = 29916;
-        });
-
-        // Remote Toy
-        ApplySpellFix({ 37027 }, [](SpellInfo* spellInfo)
-        {
-            spellInfo->_GetEffect(EFFECT_0).TriggerSpell = 37029;
         });
 
         // Eye of Grillok
@@ -3105,7 +3087,7 @@ void SpellMgr::LoadSpellInfoCorrections()
         }, [](SpellInfo* spellInfo)
     {
         // copy SP scaling data from direct damage to DoT
-        spellInfo->_GetEffect(EFFECT_0).BonusMultiplier = spellInfo->GetEffect(EFFECT_1).BonusMultiplier;
+        spellInfo->_GetEffect(EFFECT_0).BonusCoefficient = spellInfo->GetEffect(EFFECT_1).BonusCoefficient;
     });
 
     // Detect Undead
@@ -3160,7 +3142,6 @@ void SpellMgr::LoadSpellInfoCorrections()
 
     ApplySpellFix({
         63665, // Charge (Argent Tournament emote on riders)
-        31298, // Sleep (needs target selection script)
         51904, // Summon Ghouls On Scarlet Crusade (this should use conditions table, script for this spell needs to be fixed)
         2895,  // Wrath of Air Totem rank 1 (Aura)
         68933, // Wrath of Air Totem rank 2 (Aura)
@@ -3191,16 +3172,12 @@ void SpellMgr::LoadSpellInfoCorrections()
         spellInfo->Priority = 100;
     });
 
-    // Howl of Azgalor
-    ApplySpellFix({ 31344 }, [](SpellInfo* spellInfo)
-    {
-        spellInfo->_GetEffect(EFFECT_0).RadiusEntry = sSpellRadiusStore.LookupEntry(EFFECT_RADIUS_100_YARDS); // 100yards instead of 50000?!
-    });
-
     ApplySpellFix({
         42818, // Headless Horseman - Wisp Flight Port
         42821, // Headless Horseman - Wisp Flight Missile
-        17678  // Despawn Spectral Combatants
+        17678, // Despawn Spectral Combatants
+        720,   // Entangle
+        731    // Entangle
     }, [](SpellInfo* spellInfo)
     {
         spellInfo->RangeEntry = sSpellRangeStore.LookupEntry(6); // 100 yards
@@ -3248,7 +3225,7 @@ void SpellMgr::LoadSpellInfoCorrections()
     {
         // due to discrepancies between ranks
         spellInfo->EquippedItemSubClassMask = 0x0000FC33;
-        spellInfo->AttributesEx3 |= SPELL_ATTR3_CAN_PROC_WITH_TRIGGERED;
+        spellInfo->AttributesEx3 |= SPELL_ATTR3_CAN_PROC_FROM_PROCS;
     });
 
     ApplySpellFix({
@@ -3261,7 +3238,7 @@ void SpellMgr::LoadSpellInfoCorrections()
     }, [](SpellInfo* spellInfo)
     {
         // Entries were not updated after spell effect change, we have to do that manually :/
-        spellInfo->AttributesEx3 |= SPELL_ATTR3_CAN_PROC_WITH_TRIGGERED;
+        spellInfo->AttributesEx3 |= SPELL_ATTR3_CAN_PROC_FROM_PROCS;
     });
 
     ApplySpellFix({
@@ -3323,7 +3300,6 @@ void SpellMgr::LoadSpellInfoCorrections()
         45004, // Wild Magic
         45006, // Wild Magic
         45010, // Wild Magic
-        31347, // Doom
         41635, // Prayer of Mending
         44869, // Spectral Blast
         45027, // Revitalize
@@ -3518,7 +3494,7 @@ void SpellMgr::LoadSpellInfoCorrections()
     // Crafty's Ultra-Advanced Proto-Typical Shortening Blaster
     ApplySpellFix({ 51912 }, [](SpellInfo* spellInfo)
     {
-        spellInfo->_GetEffect(EFFECT_0).Amplitude = 3000;
+        spellInfo->_GetEffect(EFFECT_0).ApplyAuraPeriod = 3000;
     });
 
     // Desecration Arm - 36 instead of 37 - typo? :/
@@ -3544,6 +3520,15 @@ void SpellMgr::LoadSpellInfoCorrections()
     }, [](SpellInfo* spellInfo)
     {
         spellInfo->_GetEffect(EFFECT_0).RadiusEntry = sSpellRadiusStore.LookupEntry(EFFECT_RADIUS_150_YARDS); // 150yd
+    });
+
+    // Radius in DBC is not enough
+    ApplySpellFix({
+        36854, // Channel
+        36856  // Channel
+    }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->RangeEntry = sSpellRangeStore.LookupEntry(5); // 40yd
     });
 
     // Master Shapeshifter: missing stance data for forms other than bear - bear version has correct data
@@ -3674,6 +3659,12 @@ void SpellMgr::LoadSpellInfoCorrections()
         // copy from similar effect of Unstable Affliction (31117)
         spellInfo->AttributesEx4 |= SPELL_ATTR4_FIXED_DAMAGE;
         spellInfo->AttributesEx6 |= SPELL_ATTR6_LIMIT_PCT_DAMAGE_MODS;
+    });
+
+    // Dispersion
+    ApplySpellFix({ 60069 }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->_GetEffect(EFFECT_0).MiscValue = POWER_MANA;
     });
 
     // Improved Devouring Plague
@@ -4383,7 +4374,7 @@ void SpellMgr::LoadSpellInfoCorrections()
     // Swarming Shadows
     ApplySpellFix({ 71266, 72890 }, [](SpellInfo* spellInfo)
     {
-        spellInfo->AreaGroupId = 0; // originally, these require area 4522, which is... outside of Icecrown Citadel
+        spellInfo->RequiredAreasID = 0; // originally, these require area 4522, which is... outside of Icecrown Citadel
     });
 
     // Corruption
@@ -4720,7 +4711,7 @@ void SpellMgr::LoadSpellInfoCorrections()
         // either is a periodic with chance on tick, or a proc
 
         spellInfo->_GetEffect(EFFECT_0).ApplyAuraName = SPELL_AURA_PROC_TRIGGER_SPELL;
-        spellInfo->_GetEffect(EFFECT_0).Amplitude = 0;
+        spellInfo->_GetEffect(EFFECT_0).ApplyAuraPeriod = 0;
         spellInfo->ProcChance = 10;
     });
 
@@ -4927,6 +4918,52 @@ void SpellMgr::LoadSpellInfoCorrections()
         spellInfo->RangeEntry = sSpellRangeStore.LookupEntry(5); // 40yd
     });
 
+    // Pilgrim's Bounty - Candied Sweet Potato
+    ApplySpellFix({ 65418 }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->_GetEffect(EFFECT_2).TriggerSpell = 65410;
+    });
+
+    // Pilgrim's Bounty - Spice Bread Stuffing
+    ApplySpellFix({ 65419 }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->_GetEffect(EFFECT_2).TriggerSpell = 65416;
+    });
+
+    // Pilgrim's Bounty - Cranberry Chutney
+    ApplySpellFix({ 65420 }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->_GetEffect(EFFECT_2).TriggerSpell = 65412;
+    });
+
+    // Pilgrim's Bounty - Pumpkin Pie
+    ApplySpellFix({ 65421 }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->_GetEffect(EFFECT_2).TriggerSpell = 65415;
+    });
+
+    // Pilgrim's Bounty - Slow-Roasted Turkey
+    ApplySpellFix({ 65422 }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->_GetEffect(EFFECT_2).TriggerSpell = 65414;
+    });
+
+    ApplySpellFix({
+        24869, // Bobbing Apple, Bread of the Dead, Winter Veil Cookie
+        61874, // Noblegarden Chocolate
+        71068, // Sweet Surprise
+        71071, // Very Berry Cream
+        71073, // Dark Desire
+        71074  // Buttermilk Delight
+    }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->_GetEffect(EFFECT_1).Effect          = SPELL_EFFECT_APPLY_AURA;
+        spellInfo->_GetEffect(EFFECT_1).TargetA         = SpellImplicitTargetInfo(TARGET_UNIT_CASTER);
+        spellInfo->_GetEffect(EFFECT_1).ApplyAuraName   = SPELL_AURA_PERIODIC_TRIGGER_SPELL;
+        spellInfo->_GetEffect(EFFECT_1).ApplyAuraPeriod = 10 * IN_MILLISECONDS;
+        spellInfo->_GetEffect(EFFECT_1).TriggerSpell    = 24870;
+    });
+
     for (uint32 i = 0; i < GetSpellInfoStoreSize(); ++i)
     {
         SpellInfo* spellInfo = mSpellInfoMap[i];
@@ -4966,7 +5003,7 @@ void SpellMgr::LoadSpellInfoCorrections()
                 case SPELL_EFFECT_APPLY_AURA:
                     // special aura updates each 30 seconds
                     if (spellEffectInfo.ApplyAuraName == SPELL_AURA_MOD_ATTACK_POWER_OF_ARMOR)
-                        spellEffectInfo.Amplitude = 30 * IN_MILLISECONDS;
+                        spellEffectInfo.ApplyAuraPeriod = 30 * IN_MILLISECONDS;
                     break;
                 default:
                     break;

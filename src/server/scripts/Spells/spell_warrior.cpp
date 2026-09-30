@@ -75,7 +75,8 @@ enum WarriorSpells
     SPELL_WARRIOR_GLYPH_OF_BLOCKING                 = 58374,
     SPELL_WARRIOR_STOICISM                          = 70845,
     SPELL_WARRIOR_T10_MELEE_4P_BONUS                = 70847,
-    SPELL_WARRIOR_INTERVENE_THREAT                  = 59667
+    SPELL_WARRIOR_INTERVENE_THREAT                  = 59667,
+    SPELL_WARRIOR_WARRIORS_WRATH                    = 21887
 };
 
 enum WarriorSpellIcons
@@ -200,10 +201,10 @@ class spell_warr_damage_shield : public AuraScript
         PreventDefaultAction();
 
         // % of amount blocked
-        int32 damage = CalculatePct(int32(GetTarget()->GetShieldBlockValue()), aurEff->GetAmount());
+        int32 damage = CalculatePct(int32(eventInfo.GetActionTarget()->GetShieldBlockValue()), aurEff->GetAmount());
         CastSpellExtraArgs args(aurEff);
         args.AddSpellBP0(damage);
-        GetTarget()->CastSpell(eventInfo.GetProcTarget(), SPELL_WARRIOR_DAMAGE_SHIELD_DAMAGE, args);
+        eventInfo.GetActionTarget()->CastSpell(eventInfo.GetActor(), SPELL_WARRIOR_DAMAGE_SHIELD_DAMAGE, args);
     }
 
     void Register() override
@@ -291,7 +292,7 @@ class spell_warr_deep_wounds_aura : public AuraScript
 
         CastSpellExtraArgs args(aurEff);
         args.AddSpellBP0(damage);
-        actor->CastSpell(eventInfo.GetProcTarget(), GetEffectInfo(EFFECT_0).TriggerSpell, args);
+        actor->CastSpell(eventInfo.GetActionTarget(), GetEffectInfo(EFFECT_0).TriggerSpell, args);
     }
 
     void Register() override
@@ -332,7 +333,7 @@ class spell_warr_execute : public SpellScript
             if (AuraEffect* aurEff = caster->GetAuraEffect(SPELL_WARRIOR_GLYPH_OF_EXECUTION, EFFECT_0))
                 rageUsed += aurEff->GetAmount() * 10;
 
-            int32 bp = GetEffectValue() + int32(rageUsed * GetEffectInfo().DamageMultiplier + caster->GetTotalAttackPowerValue(BASE_ATTACK) * 0.2f);
+            int32 bp = GetEffectValue() + int32(rageUsed * GetEffectInfo().ChainAmplitude + caster->GetTotalAttackPowerValue(BASE_ATTACK) * 0.2f);
             CastSpellExtraArgs args(GetOriginalCaster()->GetGUID());
             args.AddSpellBP0(bp);
             caster->CastSpell(target, SPELL_WARRIOR_EXECUTE, args);
@@ -631,13 +632,13 @@ class spell_warr_retaliation : public AuraScript
     bool CheckProc(ProcEventInfo& eventInfo)
     {
         // check attack comes not from behind and warrior is not stunned
-        return GetTarget()->isInFront(eventInfo.GetActor(), float(M_PI)) && !GetTarget()->HasUnitState(UNIT_STATE_STUNNED);
+        return eventInfo.GetActionTarget()->isInFront(eventInfo.GetActor(), float(M_PI)) && !GetTarget()->HasUnitState(UNIT_STATE_STUNNED);
     }
 
     void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
     {
         PreventDefaultAction();
-        GetTarget()->CastSpell(eventInfo.GetProcTarget(), SPELL_WARRIOR_RETALIATION_DAMAGE, aurEff);
+        eventInfo.GetActionTarget()->CastSpell(eventInfo.GetActor(), SPELL_WARRIOR_RETALIATION_DAMAGE, aurEff);
     }
 
     void Register() override
@@ -744,7 +745,7 @@ class spell_warr_sweeping_strikes : public AuraScript
 
     bool CheckProc(ProcEventInfo& eventInfo)
     {
-        _procTarget = eventInfo.GetActor()->SelectNearbyTarget(eventInfo.GetProcTarget());
+        _procTarget = eventInfo.GetActor()->SelectNearbyTarget(eventInfo.GetActionTarget());
         return _procTarget != nullptr;
     }
 
@@ -922,6 +923,27 @@ class spell_warr_vigilance_trigger : public SpellScript
     }
 };
 
+// 21977 - Warrior's Wrath
+class spell_warr_warriors_wrath : public SpellScript
+{
+    PrepareSpellScript(spell_warr_warriors_wrath);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo({ SPELL_WARRIOR_WARRIORS_WRATH });
+    }
+
+    void HandleDummy(SpellEffIndex /*effIndex*/)
+    {
+        GetCaster()->CastSpell(GetCaster(), SPELL_WARRIOR_WARRIORS_WRATH, true);
+    }
+
+    void Register() override
+    {
+        OnEffectHit += SpellEffectFn(spell_warr_warriors_wrath::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+    }
+};
+
 void AddSC_warrior_spell_scripts()
 {
     RegisterSpellScript(spell_warr_bloodthirst);
@@ -952,4 +974,5 @@ void AddSC_warrior_spell_scripts()
     RegisterSpellScript(spell_warr_vigilance);
     RegisterSpellScript(spell_warr_vigilance_redirect_threat);
     RegisterSpellScript(spell_warr_vigilance_trigger);
+    RegisterSpellScript(spell_warr_warriors_wrath);
 }

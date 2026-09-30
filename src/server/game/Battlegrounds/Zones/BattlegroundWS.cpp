@@ -17,6 +17,7 @@
 
 #include "BattlegroundWS.h"
 #include "BattlegroundMgr.h"
+#include "BattlegroundPackets.h"
 #include "DBCStores.h"
 #include "GameObject.h"
 #include "Log.h"
@@ -30,6 +31,7 @@
 //npcbot
 #include "botdatamgr.h"
 #include "botmgr.h"
+#include "Creature.h"
 //end npcbot
 
 // these variables aren't used outside of this file, so declare them only here
@@ -76,11 +78,9 @@ BattlegroundWS::BattlegroundWS()
     _minutesElapsed = 0;
 }
 
-void BattlegroundWGScore::BuildObjectivesBlock(WorldPacket& data)
+void BattlegroundWGScore::BuildObjectivesBlock(WorldPackets::Battleground::PVPLogData_Player& playerData)
 {
-    data << uint32(2); // Objectives Count
-    data << uint32(FlagCaptures);
-    data << uint32(FlagReturns);
+    playerData.Stats = { FlagCaptures, FlagReturns };
 }
 
 BattlegroundWS::~BattlegroundWS() { }
@@ -89,7 +89,7 @@ void BattlegroundWS::PostUpdateImpl(uint32 diff)
 {
     if (GetStatus() == STATUS_IN_PROGRESS)
     {
-        if (GetStartTime() >= 27*MINUTE*IN_MILLISECONDS)
+        if (GetElapsedTime() >= 27*MINUTE*IN_MILLISECONDS)
         {
             if (GetTeamScore(TEAM_ALLIANCE) == 0)
             {
@@ -108,7 +108,7 @@ void BattlegroundWS::PostUpdateImpl(uint32 diff)
                 EndBattleground(ALLIANCE);
         }
         // first update needed after 1 minute of game already in progress
-        else if (GetStartTime() > uint32(_minutesElapsed * MINUTE * IN_MILLISECONDS) +  3 * MINUTE * IN_MILLISECONDS)
+        else if (GetElapsedTime() > uint32(_minutesElapsed * MINUTE * IN_MILLISECONDS) +  3 * MINUTE * IN_MILLISECONDS)
         {
             ++_minutesElapsed;
             UpdateWorldState(BG_WS_STATE_TIMER, 25 - _minutesElapsed);
@@ -249,7 +249,7 @@ void BattlegroundWS::AddPlayer(Player* player)
     bool const isInBattleground = IsPlayerInBattleground(player->GetGUID());
     Battleground::AddPlayer(player);
     if (!isInBattleground)
-        PlayerScores[player->GetGUID().GetCounter()] = new BattlegroundWGScore(player->GetGUID());
+        PlayerScores[player->GetGUID()] = new BattlegroundWGScore(player->GetGUID());
 }
 
 //npcbot
@@ -258,7 +258,7 @@ void BattlegroundWS::AddBot(Creature* bot)
     bool const isInBattleground = IsPlayerInBattleground(bot->GetGUID());
     Battleground::AddBot(bot);
     if (!isInBattleground)
-        BotScores[bot->GetEntry()] = new BattlegroundWGScore(bot->GetGUID());
+        BotScores[bot->GetGUID()] = new BattlegroundWGScore(bot->GetGUID());
 }
 //end npcbot
 

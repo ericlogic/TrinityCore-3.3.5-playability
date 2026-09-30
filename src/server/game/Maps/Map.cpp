@@ -18,7 +18,7 @@
 #include "Map.h"
 #include "Battleground.h"
 #include "CellImpl.h"
-#include "Chat.h"
+#include "ChatPackets.h"
 #include "DatabaseEnv.h"
 #include "DisableMgr.h"
 #include "DynamicTree.h"
@@ -845,7 +845,7 @@ void Map::Update(uint32 t_diff)
 
             // Totems
             for (ObjectGuid const& summonGuid : player->m_SummonSlot)
-                if (summonGuid)
+                if (!summonGuid.IsEmpty())
                     if (Creature* unit = GetCreature(summonGuid))
                         if (unit->GetMapId() == player->GetMapId() && !unit->IsWithinDistInMap(player, GetVisibilityRange(), false))
                             toVisit.push_back(unit);
@@ -1032,6 +1032,40 @@ template<class T>
 void Map::RemoveFromMap(T *obj, bool remove)
 {
     bool const inWorld = obj->IsInWorld() && obj->GetTypeId() >= TYPEID_UNIT && obj->GetTypeId() <= TYPEID_GAMEOBJECT;
+
+    //npcbot: tempfix for bots out of grid during remove from map
+    if constexpr (std::is_base_of_v<Creature, T>)
+    {
+        if (obj->IsNPCBot())
+        {
+            obj->RemoveFromWorld();
+
+            if (obj->isActiveObject())
+                RemoveFromActive(obj);
+
+            if (!inWorld) // if was in world, RemoveFromWorld() called DestroyForNearbyPlayers()
+                obj->DestroyForNearbyPlayers(); // previous obj->UpdateObjectVisibility(true)
+
+            if (obj->IsInGrid())
+                obj->RemoveFromGrid();
+            else
+            {
+                Player const* owner = obj->ToCreature()->GetBotOwner();
+                BOT_LOG_ERROR("npcbots", "Map::Remove<Bot>FromMap() bot {} id {} is in map id {} \"{}\" instanceId {} but not in grid!\nmaster: {}\nmaster map id {} \"{}\"",
+                    obj->GetName(), obj->GetEntry(), GetId(), GetMapName(), i_InstanceId, owner ? owner->GetGUID().ToString() : std::string{ "Unknown" },
+                    (owner && owner->IsInWorld()) ? owner->GetMap()->GetId() : 0u, (owner && owner->IsInWorld()) ? std::string(owner->GetMap()->GetMapName()) : std::string{"Unknown"});
+            }
+
+            obj->ResetMap();
+
+            if (remove)
+                DeleteFromWorld(obj);
+
+            return;
+        }
+    }
+    //end npcbot
+
     obj->RemoveFromWorld();
 
     if (obj->isActiveObject())
@@ -3087,7 +3121,9 @@ bool Map::CheckRespawn(RespawnInfo* info)
     }
 
     // next, check linked respawn time
-    ObjectGuid thisGUID = ObjectGuid((info->type == SPAWN_TYPE_GAMEOBJECT) ? HighGuid::GameObject : HighGuid::Unit, info->entry, info->spawnId);
+    ObjectGuid thisGUID = info->type == SPAWN_TYPE_GAMEOBJECT
+        ? ObjectGuid::Create<HighGuid::GameObject>(info->entry, info->spawnId)
+        : ObjectGuid::Create<HighGuid::Unit>(info->entry, info->spawnId);
     if (time_t linkedTime = GetLinkedRespawnTime(thisGUID))
     {
         time_t now = GameTime::GetGameTime();
@@ -3154,7 +3190,7 @@ bool Map::AddRespawnInfo(RespawnInfo const& info)
         if (it != bySpawnIdMap.end()) // spawnid already has a respawn scheduled
         {
             RespawnInfo* const existing = it->second;
-            if (info.respawnTime <= existing->respawnTime) // delete existing in this case
+            if (info.respawnTime < existing->respawnTime) // delete existing in this case
                 DeleteRespawnInfo(existing);
             else
                 return false;
@@ -3909,7 +3945,7 @@ Map::EnterState InstanceMap::CannotEnter(Player* player)
         return CANNOT_ENTER_ZONE_IN_COMBAT;
 
     // cannot enter if player is permanent saved to a different instance id
-    if (InstancePlayerBind* playerBind = player->GetBoundInstance(GetId(), GetDifficulty()))
+    if (InstancePlayerBind* playerBind = player->GetBoundInstance(GetId(), GetDifficultyID()))
         if (playerBind->perm && playerBind->save)
             if (playerBind->save->GetInstanceId() != GetInstanceId())
                 return CANNOT_ENTER_INSTANCE_BIND_MISMATCH;
@@ -3958,7 +3994,7 @@ bool InstanceMap::AddPlayerToMap(Player* player)
                 // cannot enter other instances if bound permanently
                 if (playerBind->save != mapSave)
                 {
-                    TC_LOG_ERROR("maps", "InstanceMap::Add: player {} {} is permanently bound to instance {} {}, {}, {}, {}, {}, {} but he is being put into instance {} {}, {}, {}, {}, {}, {}", player->GetName(), player->GetGUID().ToString(), GetMapName(), playerBind->save->GetMapId(), playerBind->save->GetInstanceId(), static_cast<uint32>(playerBind->save->GetDifficulty()), playerBind->save->GetPlayerCount(), playerBind->save->GetGroupCount(), playerBind->save->CanReset(), GetMapName(), mapSave->GetMapId(), mapSave->GetInstanceId(), static_cast<uint32>(mapSave->GetDifficulty()), mapSave->GetPlayerCount(), mapSave->GetGroupCount(), mapSave->CanReset());
+                    TC_LOG_ERROR("maps", "InstanceMap::Add: player {} {} is permanently bound to instance {} {}, {}, {}, {}, {}, {} but he is being put into instance {} {}, {}, {}, {}, {}, {}", player->GetName(), player->GetGUID().ToString(), GetMapName(), playerBind->save->GetMapId(), playerBind->save->GetInstanceId(), static_cast<uint32>(playerBind->save->GetDifficultyID()), playerBind->save->GetPlayerCount(), playerBind->save->GetGroupCount(), playerBind->save->CanReset(), GetMapName(), mapSave->GetMapId(), mapSave->GetInstanceId(), static_cast<uint32>(mapSave->GetDifficultyID()), mapSave->GetPlayerCount(), mapSave->GetGroupCount(), mapSave->CanReset());
                     return false;
                 }
             }
@@ -3970,9 +4006,9 @@ bool InstanceMap::AddPlayerToMap(Player* player)
                     InstanceGroupBind* groupBind = group->GetBoundInstance(this);
                     if (playerBind && playerBind->save != mapSave)
                     {
-                        TC_LOG_ERROR("maps", "InstanceMap::Add: player {} {} is being put into instance {} {}, {}, {}, {}, {}, {} but he is in group {} and is bound to instance {}, {}, {}, {}, {}, {}!", player->GetName(), player->GetGUID().ToString(), GetMapName(), mapSave->GetMapId(), mapSave->GetInstanceId(), static_cast<uint32>(mapSave->GetDifficulty()), mapSave->GetPlayerCount(), mapSave->GetGroupCount(), mapSave->CanReset(), group->GetLeaderGUID().ToString(), playerBind->save->GetMapId(), playerBind->save->GetInstanceId(), static_cast<uint32>(playerBind->save->GetDifficulty()), playerBind->save->GetPlayerCount(), playerBind->save->GetGroupCount(), playerBind->save->CanReset());
+                        TC_LOG_ERROR("maps", "InstanceMap::Add: player {} {} is being put into instance {} {}, {}, {}, {}, {}, {} but he is in group {} and is bound to instance {}, {}, {}, {}, {}, {}!", player->GetName(), player->GetGUID().ToString(), GetMapName(), mapSave->GetMapId(), mapSave->GetInstanceId(), static_cast<uint32>(mapSave->GetDifficultyID()), mapSave->GetPlayerCount(), mapSave->GetGroupCount(), mapSave->CanReset(), group->GetLeaderGUID().ToString(), playerBind->save->GetMapId(), playerBind->save->GetInstanceId(), static_cast<uint32>(playerBind->save->GetDifficultyID()), playerBind->save->GetPlayerCount(), playerBind->save->GetGroupCount(), playerBind->save->CanReset());
                         if (groupBind)
-                            TC_LOG_ERROR("maps", "InstanceMap::Add: the group is bound to the instance {} {}, {}, {}, {}, {}, {}", GetMapName(), groupBind->save->GetMapId(), groupBind->save->GetInstanceId(), static_cast<uint32>(groupBind->save->GetDifficulty()), groupBind->save->GetPlayerCount(), groupBind->save->GetGroupCount(), groupBind->save->CanReset());
+                            TC_LOG_ERROR("maps", "InstanceMap::Add: the group is bound to the instance {} {}, {}, {}, {}, {}, {}", GetMapName(), groupBind->save->GetMapId(), groupBind->save->GetInstanceId(), static_cast<uint32>(groupBind->save->GetDifficultyID()), groupBind->save->GetPlayerCount(), groupBind->save->GetGroupCount(), groupBind->save->CanReset());
                         //ABORT();
                         return false;
                     }
@@ -3984,7 +4020,7 @@ bool InstanceMap::AddPlayerToMap(Player* player)
                         // cannot jump to a different instance without resetting it
                         if (groupBind->save != mapSave)
                         {
-                            TC_LOG_ERROR("maps", "InstanceMap::Add: player {} {} is being put into instance {}, {}, {} but he is in group {} which is bound to instance {}, {}, {}!", player->GetName(), player->GetGUID().ToString(), mapSave->GetMapId(), mapSave->GetInstanceId(), static_cast<uint32>(mapSave->GetDifficulty()), group->GetLeaderGUID().ToString(), groupBind->save->GetMapId(), groupBind->save->GetInstanceId(), static_cast<uint32>(groupBind->save->GetDifficulty()));
+                            TC_LOG_ERROR("maps", "InstanceMap::Add: player {} {} is being put into instance {}, {}, {} but he is in group {} which is bound to instance {}, {}, {}!", player->GetName(), player->GetGUID().ToString(), mapSave->GetMapId(), mapSave->GetInstanceId(), static_cast<uint32>(mapSave->GetDifficultyID()), group->GetLeaderGUID().ToString(), groupBind->save->GetMapId(), groupBind->save->GetInstanceId(), static_cast<uint32>(groupBind->save->GetDifficultyID()));
                             TC_LOG_ERROR("maps", "MapSave players: {}, group count: {}", mapSave->GetPlayerCount(), mapSave->GetGroupCount());
                             if (groupBind->save)
                                 TC_LOG_ERROR("maps", "GroupBind save players: {}, group count: {}", groupBind->save->GetPlayerCount(), groupBind->save->GetGroupCount());
@@ -4126,7 +4162,7 @@ bool InstanceMap::Reset(uint8 method)
                 // set the homebind timer for players inside (1 minute)
                 for (MapRefManager::iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
                 {
-                    InstancePlayerBind* bind = itr->GetSource()->GetBoundInstance(GetId(), GetDifficulty());
+                    InstancePlayerBind* bind = itr->GetSource()->GetBoundInstance(GetId(), GetDifficultyID());
                     if (bind && bind->extendState && bind->save->GetInstanceId() == GetInstanceId())
                         doUnload = false;
                     else
@@ -4169,7 +4205,7 @@ void InstanceMap::PermBindAllPlayers()
     InstanceSave* save = sInstanceSaveMgr->GetInstanceSave(GetInstanceId());
     if (!save)
     {
-        TC_LOG_ERROR("maps", "Cannot bind players to instance map (Name: {}, Entry: {}, Difficulty: {}, ID: {}) because no instance save is available!", GetMapName(), GetId(), static_cast<uint32>(GetDifficulty()), GetInstanceId());
+        TC_LOG_ERROR("maps", "Cannot bind players to instance map (Name: {}, Entry: {}, Difficulty: {}, ID: {}) because no instance save is available!", GetMapName(), GetId(), static_cast<uint32>(GetDifficultyID()), GetInstanceId());
         return;
     }
 
@@ -4181,16 +4217,16 @@ void InstanceMap::PermBindAllPlayers()
         if (player->IsGameMaster())
             continue;
 
-        InstancePlayerBind* bind = player->GetBoundInstance(save->GetMapId(), save->GetDifficulty());
+        InstancePlayerBind* bind = player->GetBoundInstance(save->GetMapId(), save->GetDifficultyID());
         if (bind && bind->perm)
         {
             if (bind->save && bind->save->GetInstanceId() != save->GetInstanceId())
             {
-                TC_LOG_ERROR("maps", "Player ({}, Name: {}) is in instance map (Name: {}, Entry: {}, Difficulty: {}, ID: {}) that is being bound, but already has a save for the map on ID {}!", player->GetGUID().ToString(), player->GetName(), GetMapName(), save->GetMapId(), static_cast<uint32>(save->GetDifficulty()), save->GetInstanceId(), bind->save->GetInstanceId());
+                TC_LOG_ERROR("maps", "Player ({}, Name: {}) is in instance map (Name: {}, Entry: {}, Difficulty: {}, ID: {}) that is being bound, but already has a save for the map on ID {}!", player->GetGUID().ToString(), player->GetName(), GetMapName(), save->GetMapId(), static_cast<uint32>(save->GetDifficultyID()), save->GetInstanceId(), bind->save->GetInstanceId());
             }
             else if (!bind->save)
             {
-                TC_LOG_ERROR("maps", "Player ({}, Name: {}) is in instance map (Name: {}, Entry: {}, Difficulty: {}, ID: {}) that is being bound, but already has a bind (without associated save) for the map!", player->GetGUID().ToString(), player->GetName(), GetMapName(), save->GetMapId(), static_cast<uint32>(save->GetDifficulty()), save->GetInstanceId());
+                TC_LOG_ERROR("maps", "Player ({}, Name: {}) is in instance map (Name: {}, Entry: {}, Difficulty: {}, ID: {}) that is being bound, but already has a bind (without associated save) for the map!", player->GetGUID().ToString(), player->GetName(), GetMapName(), save->GetMapId(), static_cast<uint32>(save->GetDifficultyID()), save->GetInstanceId());
             }
         }
         else
@@ -4225,7 +4261,7 @@ void InstanceMap::UnloadAll()
 void InstanceMap::SendResetWarnings(uint32 timeLeft) const
 {
     for (MapRefManager::const_iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
-        itr->GetSource()->SendInstanceResetWarning(GetId(), itr->GetSource()->GetDifficulty(IsRaid()), timeLeft, false);
+        itr->GetSource()->SendInstanceResetWarning(GetId(), GetDifficultyID(), timeLeft, false);
 }
 
 void InstanceMap::SetResetSchedule(bool on)
@@ -4243,9 +4279,9 @@ void InstanceMap::SetResetSchedule(bool on)
     }
 }
 
-MapDifficulty const* Map::GetMapDifficulty() const
+MapDifficultyEntry const* Map::GetMapDifficulty() const
 {
-    return GetMapDifficultyData(GetId(), GetDifficulty());
+    return GetMapDifficultyData(GetId(), GetDifficultyID());
 }
 
 uint32 Map::GetId() const
@@ -4253,14 +4289,14 @@ uint32 Map::GetId() const
     return i_mapEntry->ID;
 }
 
-bool Map::IsRegularDifficulty() const
-{
-    return GetDifficulty() == REGULAR_DIFFICULTY;
-}
-
 bool Map::Instanceable() const
 {
     return i_mapEntry && i_mapEntry->Instanceable();
+}
+
+bool Map::IsWorldMap() const
+{
+    return i_mapEntry && i_mapEntry->IsWorldMap();
 }
 
 bool Map::IsDungeon() const
@@ -4280,7 +4316,7 @@ bool Map::IsRaid() const
 
 bool Map::IsRaidOrHeroicDungeon() const
 {
-    return IsRaid() || i_spawnMode > DUNGEON_DIFFICULTY_NORMAL;
+    return IsRaid() || IsHeroic();
 }
 
 bool Map::IsHeroic() const
@@ -4291,7 +4327,7 @@ bool Map::IsHeroic() const
 bool Map::Is25ManRaid() const
 {
     // since 25man difficulties are 1 and 3, we can check them like that
-    return IsRaid() && i_spawnMode & RAID_DIFFICULTY_MASK_25MAN;
+    return IsRaid() && (i_spawnMode == RAID_DIFFICULTY_25MAN_NORMAL || i_spawnMode == RAID_DIFFICULTY_25MAN_HEROIC);
 }
 
 bool Map::IsBattleground() const
@@ -4325,17 +4361,17 @@ bool InstanceMap::HasPermBoundPlayers() const
 
 uint32 InstanceMap::GetMaxPlayers() const
 {
-    MapDifficulty const* mapDiff = GetMapDifficulty();
-    if (mapDiff && mapDiff->maxPlayers)
-        return mapDiff->maxPlayers;
+    MapDifficultyEntry const* mapDiff = GetMapDifficulty();
+    if (mapDiff && mapDiff->MaxPlayers)
+        return mapDiff->MaxPlayers;
 
     return GetEntry()->MaxPlayers;
 }
 
 uint32 InstanceMap::GetMaxResetDelay() const
 {
-    MapDifficulty const* mapDiff = GetMapDifficulty();
-    return mapDiff ? mapDiff->resetTime : 0;
+    MapDifficultyEntry const* mapDiff = GetMapDifficulty();
+    return mapDiff ? mapDiff->RaidDuration : 0;
 }
 
 /* ******* Battleground Instance Maps ******* */
@@ -4791,9 +4827,9 @@ void Map::SendZoneWeather(ZoneDynamicInfo const& zoneDynamicInfo, Player* player
 /// Send a System Message to all players in the zone (except self if mentioned)
 void Map::SendZoneText(uint32 zoneId, char const* text, WorldSession const* self, uint32 team) const
 {
-    WorldPacket data;
-    ChatHandler::BuildChatPacket(data, CHAT_MSG_SYSTEM, LANG_UNIVERSAL, nullptr, nullptr, text);
-    SendZoneMessage(zoneId, &data, self, team);
+    WorldPackets::Chat::Chat packet;
+    packet.Initialize(CHAT_MSG_SYSTEM, LANG_UNIVERSAL, nullptr, nullptr, text);
+    SendZoneMessage(zoneId, packet.Write(), self, team);
 }
 
 void Map::SetZoneMusic(uint32 zoneId, uint32 musicId)
@@ -4875,7 +4911,7 @@ std::string Map::GetDebugInfo() const
 {
     std::stringstream sstr;
     sstr << std::boolalpha
-        << "Id: " << GetId() << " InstanceId: " << GetInstanceId() << " Difficulty: " << std::to_string(GetDifficulty())
+        << "Id: " << GetId() << " InstanceId: " << GetInstanceId() << " Difficulty: " << std::to_string(GetDifficultyID())
         << " HasPlayers: " << HavePlayers();
     return sstr.str();
 }

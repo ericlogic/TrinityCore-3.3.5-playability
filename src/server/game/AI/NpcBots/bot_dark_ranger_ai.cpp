@@ -49,14 +49,8 @@ enum DarkRangerSpecial
     MODEL_BLOODY_BONES                  = 25538
 };
 
-static const uint32 Darkranger_spells_damage_arr[] =
-{ BLACK_ARROW_1, DRAIN_LIFE_1 };
-
-static const uint32 Darkranger_spells_cc_arr[] =
-{ SILENCE_1 };
-
-static const std::vector<uint32> Darkranger_spells_damage(FROM_ARRAY(Darkranger_spells_damage_arr));
-static const std::vector<uint32> Darkranger_spells_cc(FROM_ARRAY(Darkranger_spells_cc_arr));
+static const std::vector<uint32> Darkranger_spells_damage{ BLACK_ARROW_1, DRAIN_LIFE_1 };
+static const std::vector<uint32> Darkranger_spells_cc{ SILENCE_1 };
 
 class dark_ranger_bot : public CreatureScript
 {
@@ -130,12 +124,10 @@ public:
             if (Rand() > 55)
                 return;
 
-            if (IsSpellReady(SILENCE_1, diff))
-            {
-                Unit* target = FindCastingTarget(CalcSpellMaxRange(SILENCE_1), 0, SILENCE_1);
-                if (target && doCast(target, GetSpell(SILENCE_1)))
-                    return;
-            }
+            if (IsSpellReady(SILENCE_1, diff, false) && !HasQueuedSpellAction(SILENCE_1))
+                if (Unit const* target = FindCastingTarget(CalcSpellMaxRange(SILENCE_1), 0, SILENCE_1))
+                    if (EnqueueCounterSpellAction(target->GetGUID(), SILENCE_1, true))
+                        return;
         }
 
         void UpdateAI(uint32 diff) override
@@ -165,7 +157,7 @@ public:
                 me->InterruptSpell(CURRENT_AUTOREPEAT_SPELL);
 
                 if (!IAmFree() && me->IsStandState() && !me->isMoving() && !master->isMoving() && !me->IsMounted() &&
-                    !me->IsInCombat() && !master->IsInCombat() && Rand() < 10 && me->GetDistance(master) < 15 &&
+                    !me->IsInCombat() && !master->IsInCombat() && !IsCasting() && Rand() < 10 && me->GetDistance(master) < 15 &&
                     !me->HasStealthAura() && !me->HasInvisibilityAura() && !me->HasAuraType(SPELL_AURA_PERIODIC_DAMAGE) &&
                     _minions.empty())
                 {
@@ -252,7 +244,7 @@ public:
 
             std::list<Unit*> targets;
             GetNearbyTargetsList(targets, 50, 0);
-            targets.remove_if(BOTAI_PRED::AuraedTargetExcludeByCaster(BLACK_ARROW_1, me->GetGUID()));
+            std::erase_if(targets, BOTAI_PRED::AuraedTargetExcludeByCaster(BLACK_ARROW_1, me->GetGUID()));
             if (Unit* target = !targets.empty() ? Bcore::Containers::SelectRandomContainerElement(targets) : nullptr)
             {
                 if (doCast(target, GetSpell(BLACK_ARROW_1)))
@@ -273,7 +265,12 @@ public:
             float pctbonus = 1.0f;
             //Black Arrow on targets < 20% hp (only direct damage)
             if (baseId == BLACK_ARROW_1 && damageinfo.target && damageinfo.target->HasAuraState(AURA_STATE_HEALTHLESS_20_PERCENT))
-                pctbonus *= 5.f;
+            {
+                if (static_cast<uint32>(damage * 5) > damageinfo.target->GetHealth())
+                    damage *= 5;
+                else
+                    damage *= 3;
+            }
 
             damage = int32(damage * pctbonus + flat_mod);
         }
@@ -373,7 +370,7 @@ public:
         void OnBotDamageDealt(Unit* victim, uint32 damage, CleanDamage const* /*cleanDamage*/, DamageEffectType /*damagetype*/, SpellInfo const* spellInfo) override
         {
             //black arrow affection -> spawn skeleton (mark)
-            if (damage && me->IsAlive() && victim->GetTypeId() == TYPEID_UNIT && damage >= victim->GetHealth() &&
+            if (damage && me->IsAlive() && victim->IsCreature() && damage >= victim->GetHealth() &&
                 (victim->GetCreatureType() == CREATURE_TYPE_BEAST ||
                 victim->GetCreatureType() == CREATURE_TYPE_DRAGONKIN ||
                 victim->GetCreatureType() == CREATURE_TYPE_HUMANOID) &&
@@ -423,24 +420,24 @@ public:
                 Unit* u = nullptr;
                 //try 1: by minimal level
                 uint8 minlevel = me->GetLevel();
-                for (Summons::const_iterator itr = _minions.begin(); itr != _minions.end(); ++itr)
+                for (Unit* s : _minions)
                 {
-                    if ((*itr)->GetLevel() < minlevel)
+                    if (s->GetLevel() < minlevel)
                     {
-                        minlevel = (*itr)->GetLevel();
-                        u = *itr;
+                        minlevel = s->GetLevel();
+                        u = s;
                     }
                 }
                 //try 2: by minimal duration (if expiring already)
                 if (!u)
                 {
                     uint32 minduration = static_cast<uint32>((*_minions.begin())->GetAI()->GetData(BOTPETAI_MISC_DURATION_MAX) * 3 / 4);
-                    for (Summons::const_iterator itr = _minions.begin(); itr != _minions.end(); ++itr)
+                    for (Unit* s : _minions)
                     {
-                        if ((*itr)->GetAI()->GetData(BOTPETAI_MISC_DURATION) > minduration)
+                        if (s->GetAI()->GetData(BOTPETAI_MISC_DURATION) > minduration)
                         {
-                            minduration = (*itr)->GetAI()->GetData(BOTPETAI_MISC_DURATION);
-                            u = *itr;
+                            minduration = s->GetAI()->GetData(BOTPETAI_MISC_DURATION);
+                            u = s;
                         }
                     }
                 }
@@ -517,7 +514,7 @@ public:
         {
             //all darkranger bot pets despawn at death or manually (gossip, teleport, etc.)
             //BOT_LOG_ERROR("entities.unit", "SummonedCreatureDespawn: {}'s {}", me->GetName(), summon->GetName());
-            if (_minions.find(summon) != _minions.end())
+            if (_minions.contains(summon))
                 _minions.erase(summon);
         }
 
@@ -594,7 +591,7 @@ public:
         //}
     private:
         ObjectGuid _blackArrowKillGUID;
-        typedef std::set<Creature*> Summons;
+        using Summons = std::set<Creature*>;
         Summons _minions;
     };
 };

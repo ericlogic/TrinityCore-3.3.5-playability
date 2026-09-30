@@ -17,6 +17,7 @@
 
 #include "BattlegroundEY.h"
 #include "BattlegroundMgr.h"
+#include "BattlegroundPackets.h"
 #include "Creature.h"
 #include "DBCStores.h"
 #include "GameObject.h"
@@ -26,7 +27,6 @@
 #include "Player.h"
 #include "Random.h"
 #include "Util.h"
-#include "WorldPacket.h"
 #include "WorldStatePackets.h"
 
 //npcbot
@@ -40,10 +40,9 @@ uint32 BG_EY_HonorScoreTicks[BG_HONOR_MODE_NUM] =
     160  // holiday
 };
 
-void BattlegroundEYScore::BuildObjectivesBlock(WorldPacket& data)
+void BattlegroundEYScore::BuildObjectivesBlock(WorldPackets::Battleground::PVPLogData_Player& playerData)
 {
-    data << uint32(1); // Objectives Count
-    data << uint32(FlagCaptures);
+    playerData.Stats = { FlagCaptures };
 }
 
 BattlegroundEY::BattlegroundEY()
@@ -434,7 +433,7 @@ void BattlegroundEY::AddPlayer(Player* player)
     bool const isInBattleground = IsPlayerInBattleground(player->GetGUID());
     Battleground::AddPlayer(player);
     if (!isInBattleground)
-        PlayerScores[player->GetGUID().GetCounter()] = new BattlegroundEYScore(player->GetGUID());
+        PlayerScores[player->GetGUID()] = new BattlegroundEYScore(player->GetGUID());
 
     m_PlayersNearPoint[EY_POINTS_MAX].push_back(player->GetGUID());
 }
@@ -445,7 +444,7 @@ void BattlegroundEY::AddBot(Creature* bot)
     bool const isInBattleground = IsPlayerInBattleground(bot->GetGUID());
     Battleground::AddBot(bot);
     if (!isInBattleground)
-        BotScores[bot->GetEntry()] = new BattlegroundEYScore(bot->GetGUID());
+        BotScores[bot->GetGUID()] = new BattlegroundEYScore(bot->GetGUID());
 
     m_PlayersNearPoint[EY_POINTS_MAX].push_back(bot->GetGUID());
 }
@@ -1076,7 +1075,7 @@ void BattlegroundEY::EventTeamCapturedPoint(Player* player, uint32 Point)
     else
         SendBroadcastText(m_CapturingPointTypes[Point].MessageIdHorde, CHAT_MSG_BG_SYSTEM_HORDE, player);
 
-    if (BgCreatures[Point])
+    if (!BgCreatures[Point].IsEmpty())
         DelCreature(Point);
 
     WorldSafeLocsEntry const* sg = sWorldSafeLocsStore.LookupEntry(m_CapturingPointTypes[Point].GraveyardId);
@@ -1140,7 +1139,7 @@ void BattlegroundEY::EventBotTeamCapturedPoint(Creature const* bot, uint32 Point
     else
         SendBroadcastText(m_CapturingPointTypes[Point].MessageIdHorde, CHAT_MSG_BG_SYSTEM_HORDE, bot);
 
-    if (BgCreatures[Point])
+    if (!BgCreatures[Point].IsEmpty())
         DelCreature(Point);
 
     WorldSafeLocsEntry const* sg = sWorldSafeLocsStore.LookupEntry(m_CapturingPointTypes[Point].GraveyardId);
